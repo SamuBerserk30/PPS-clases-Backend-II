@@ -1,5 +1,7 @@
 package co.edu.cesde.pps.model;
 
+import lombok.*;
+
 import java.util.Objects;
 
 /**
@@ -15,6 +17,12 @@ import java.util.Objects;
  * Relaciones (futuro - etapa02):
  * - 1:N con User (un rol puede tener múltiples usuarios)
  */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
 public class Role {
 
     private Long roleId;
@@ -22,8 +30,6 @@ public class Role {
     private String description;
 
     // Constructor vacío (requerido para JPA futuro)
-    public Role() {
-    }
 
     // Constructor con campos obligatorios
     public Role(String name) {
@@ -37,30 +43,6 @@ public class Role {
     }
 
     // Getters y Setters
-
-    public Long getRoleId() {
-        return roleId;
-    }
-
-    public void setRoleId(Long roleId) {
-        this.roleId = roleId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
     // equals y hashCode basados en ID
 
@@ -79,12 +61,4 @@ public class Role {
 
     // toString sin navegación a objetos relacionados
 
-    @Override
-    public String toString() {
-        return "Role{" +
-                "roleId=" + roleId +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                '}';
-    }
 }
