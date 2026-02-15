@@ -46,11 +46,6 @@ public class Category {
     private List<Product> products;
 
     // Constructor vacío (requerido para JPA futuro)
-    public Category() {
-        this.subcategories = new ArrayList<>();
-        this.products = new ArrayList<>();
-    }
-
     // Constructor para categoría raíz (sin parent)
     public Category(String name, String slug) {
         this.parent = null; // Categoría raíz
