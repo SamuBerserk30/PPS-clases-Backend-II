@@ -75,7 +75,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class Cart {
 
     private Long cartId;
@@ -89,34 +89,10 @@ public class Cart {
     private List<CartItem> items;
 
     // Constructor para carrito de invitado
-    public Cart(UserSession session) {
-        this.user = null; // Invitado
-        this.session = session;
-        this.status = CartStatus.OPEN;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-        this.items = new ArrayList<>();
-    }
 
     // Constructor para carrito de usuario registrado
-    public Cart(User user, UserSession session) {
-        this.user = user;
-        this.session = session;
-        this.status = CartStatus.OPEN;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-        this.items = new ArrayList<>();
-    }
 
     // Constructor completo (excepto ID y timestamps autogenerados)
-    public Cart(User user, UserSession session, CartStatus status) {
-        this.user = user;
-        this.session = session;
-        this.status = status != null ? status : CartStatus.OPEN;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-        this.items = new ArrayList<>();
-    }
 
     // Getters y Setters
 
@@ -164,4 +140,17 @@ public class Cart {
 
     // toString sin navegación a objetos relacionados (solo IDs y tamaño de colección)
 
+    @Override
+    public String toString() {
+        return "Cart{" +
+                "cartId=" + cartId +
+                ", userId=" + (user != null ? user.getUserId() : null) +
+                ", sessionId=" + (session != null ? session.getSessionId() : null) +
+                ", status=" + status +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", itemsCount=" + (items != null ? items.size() : 0) +
+                ", total=" + calculateTotal() +
+                '}';
+    }
 }
