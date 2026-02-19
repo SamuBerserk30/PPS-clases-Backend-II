@@ -39,7 +39,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class CartItem {
 
     private Long cartItemId;
@@ -59,15 +59,20 @@ public class CartItem {
     }
 
     // Constructor completo (excepto ID y timestamp autogenerado)
-    public CartItem(Cart cart, Product product, Integer quantity, BigDecimal unitPrice, LocalDateTime addedAt) {
-        this.cart = cart;
-        this.product = product;
-        this.quantity = quantity;
-        this.unitPrice = unitPrice;
-        this.addedAt = addedAt != null ? addedAt : LocalDateTime.now();
-    }
 
     // Getters y Setters
+
+    // Setters personalizados con validación (override de Lombok)
+
+    public void setQuantity(Integer quantity) {
+        ValidationUtils.validatePositive(quantity, "quantity");
+        this.quantity = quantity;
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) {
+        ValidationUtils.validateNonNegative(unitPrice, "unitPrice");
+        this.unitPrice = unitPrice;
+    }
 
     // Método helper para calcular subtotal del item
     public BigDecimal calculateSubtotal() {
@@ -91,4 +96,16 @@ public class CartItem {
 
     // toString sin navegación a objetos relacionados (solo IDs)
 
+    @Override
+    public String toString() {
+        return "CartItem{" +
+                "cartItemId=" + cartItemId +
+                ", cartId=" + (cart != null ? cart.getCartId() : null) +
+                ", productId=" + (product != null ? product.getProductId() : null) +
+                ", quantity=" + quantity +
+                ", unitPrice=" + unitPrice +
+                ", subtotal=" + calculateSubtotal() +
+                ", addedAt=" + addedAt +
+                '}';
+    }
 }
