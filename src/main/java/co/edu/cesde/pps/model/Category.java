@@ -33,7 +33,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class Category {
 
     private Long categoryId;
@@ -47,22 +47,8 @@ public class Category {
 
     // Constructor vacío (requerido para JPA futuro)
     // Constructor para categoría raíz (sin parent)
-    public Category(String name, String slug) {
-        this.parent = null; // Categoría raíz
-        this.name = name;
-        this.slug = slug;
-        this.subcategories = new ArrayList<>();
-        this.products = new ArrayList<>();
-    }
 
     // Constructor para subcategoría (con parent)
-    public Category(Category parent, String name, String slug) {
-        this.parent = parent;
-        this.name = name;
-        this.slug = slug;
-        this.subcategories = new ArrayList<>();
-        this.products = new ArrayList<>();
-    }
 
     // Getters y Setters
 
@@ -92,4 +78,16 @@ public class Category {
 
     // toString sin navegación a objetos relacionados (solo IDs y tamaño de colecciones)
 
+    @Override
+    public String toString() {
+        return "Category{" +
+                "categoryId=" + categoryId +
+                ", parentId=" + (parent != null ? parent.getCategoryId() : null) +
+                ", name='" + name + '\'' +
+                ", slug='" + slug + '\'' +
+                ", isRoot=" + isRootCategory() +
+                ", subcategoriesCount=" + (subcategories != null ? subcategories.size() : 0) +
+                ", productsCount=" + (products != null ? products.size() : 0) +
+                '}';
+    }
 }
