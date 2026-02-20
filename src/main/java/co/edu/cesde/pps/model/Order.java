@@ -49,7 +49,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class Order {
 
     private Long orderId;
@@ -84,23 +84,30 @@ public class Order {
     }
 
     // Constructor completo (excepto ID y timestamp autogenerado)
-    public Order(String orderNumber, Long userId, Long orderStatusId,
-                 Long shippingAddressId, Long billingAddressId,
-                 BigDecimal subtotal, BigDecimal tax, BigDecimal shippingCost, BigDecimal total) {
-        this.orderNumber = orderNumber;
-        this.userId = userId;
-        this.orderStatusId = orderStatusId;
-        this.shippingAddressId = shippingAddressId;
-        this.billingAddressId = billingAddressId;
-        this.subtotal = subtotal != null ? subtotal : BigDecimal.ZERO;
-        this.tax = tax != null ? tax : BigDecimal.ZERO;
-        this.shippingCost = shippingCost != null ? shippingCost : BigDecimal.ZERO;
-        this.total = total != null ? total : BigDecimal.ZERO;
-        this.createdAt = LocalDateTime.now();
-        this.items = new ArrayList<>();
-    }
 
     // Getters y Setters
+
+    // Setters personalizados con validación (override de Lombok)
+
+    public void setSubtotal(BigDecimal subtotal) {
+        ValidationUtils.validateNonNegative(subtotal, "subtotal");
+        this.subtotal = subtotal;
+    }
+
+    public void setTax(BigDecimal tax) {
+        ValidationUtils.validateNonNegative(tax, "tax");
+        this.tax = tax;
+    }
+
+    public void setShippingCost(BigDecimal shippingCost) {
+        ValidationUtils.validateNonNegative(shippingCost, "shippingCost");
+        this.shippingCost = shippingCost;
+    }
+
+    public void setTotal(BigDecimal total) {
+        ValidationUtils.validateNonNegative(total, "total");
+        this.total = total;
+    }
 
     // Método helper para calcular total automáticamente
     public BigDecimal calculateTotal() {
@@ -123,4 +130,21 @@ public class Order {
     }
 
     // toString sin navegación a objetos relacionados (solo IDs y tamaño de colección)
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "orderId=" + orderId +
+                ", orderNumber='" + orderNumber + '\'' +
+                ", userId=" + userId +
+                ", orderStatusId=" + orderStatusId +
+                ", shippingAddressId=" + shippingAddressId +
+                ", billingAddressId=" + billingAddressId +
+                ", subtotal=" + subtotal +
+                ", tax=" + tax +
+                ", shippingCost=" + shippingCost +
+                ", total=" + total +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }
