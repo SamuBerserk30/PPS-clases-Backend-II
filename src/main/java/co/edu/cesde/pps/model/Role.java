@@ -22,7 +22,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class Role {
 
     private Long roleId;
@@ -37,10 +37,6 @@ public class Role {
     }
 
     // Constructor completo (excepto ID autogenerado)
-    public Role(String name, String description) {
-        this.name = name;
-        this.description = description;
-    }
 
     // Getters y Setters
 
@@ -61,4 +57,12 @@ public class Role {
 
     // toString sin navegación a objetos relacionados
 
+    @Override
+    public String toString() {
+        return "Role{" +
+                "roleId=" + roleId +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
 }
