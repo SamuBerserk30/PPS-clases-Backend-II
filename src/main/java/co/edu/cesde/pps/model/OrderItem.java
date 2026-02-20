@@ -43,7 +43,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class OrderItem {
 
     private Long orderItemId;
@@ -65,16 +65,29 @@ public class OrderItem {
     }
 
     // Constructor completo (excepto ID autogenerado)
-    public OrderItem(Order order, Product product, Integer quantity,
-                     BigDecimal unitPrice, BigDecimal lineTotal) {
-        this.order = order;
-        this.product = product;
-        this.quantity = quantity;
-        this.unitPrice = unitPrice;
-        this.lineTotal = lineTotal != null ? lineTotal : calculateLineTotal();
-    }
 
     // Getters y Setters
+
+    // Setters personalizados con validación (override de Lombok)
+
+    public void setQuantity(Integer quantity) {
+        ValidationUtils.validatePositive(quantity, "quantity");
+        this.quantity = quantity;
+        // Recalcular lineTotal al cambiar quantity
+        this.lineTotal = calculateLineTotal();
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) {
+        ValidationUtils.validateNonNegative(unitPrice, "unitPrice");
+        this.unitPrice = unitPrice;
+        // Recalcular lineTotal al cambiar unitPrice
+        this.lineTotal = calculateLineTotal();
+    }
+
+    public void setLineTotal(BigDecimal lineTotal) {
+        ValidationUtils.validateNonNegative(lineTotal, "lineTotal");
+        this.lineTotal = lineTotal;
+    }
 
     // Método helper para calcular total de la línea
     public BigDecimal calculateLineTotal() {
@@ -98,4 +111,15 @@ public class OrderItem {
 
     // toString sin navegación a objetos relacionados (solo IDs)
 
+    @Override
+    public String toString() {
+        return "OrderItem{" +
+                "orderItemId=" + orderItemId +
+                ", orderId=" + (order != null ? order.getOrderId() : null) +
+                ", productId=" + (product != null ? product.getProductId() : null) +
+                ", quantity=" + quantity +
+                ", unitPrice=" + unitPrice +
+                ", lineTotal=" + lineTotal +
+                '}';
+    }
 }
