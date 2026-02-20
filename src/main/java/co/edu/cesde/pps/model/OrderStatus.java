@@ -21,7 +21,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class OrderStatus {
 
     private Long orderStatusId;
@@ -53,4 +53,11 @@ public class OrderStatus {
 
     // toString sin navegación a objetos relacionados
 
+    @Override
+    public String toString() {
+        return "OrderStatus{" +
+                "orderStatusId=" + orderStatusId +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }
