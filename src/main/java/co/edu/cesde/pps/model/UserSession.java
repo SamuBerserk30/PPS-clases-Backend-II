@@ -30,7 +30,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class UserSession {
 
     private Long sessionId;
@@ -42,28 +42,10 @@ public class UserSession {
     // Constructor vacío (requerido para JPA futuro)
 
     // Constructor para sesión de invitado (sin user)
-    public UserSession(String sessionToken, LocalDateTime expiresAt) {
-        this.user = null; // Invitado
-        this.sessionToken = sessionToken;
-        this.createdAt = LocalDateTime.now();
-        this.expiresAt = expiresAt;
-    }
 
     // Constructor para sesión de usuario registrado
-    public UserSession(User user, String sessionToken, LocalDateTime expiresAt) {
-        this.user = user;
-        this.sessionToken = sessionToken;
-        this.createdAt = LocalDateTime.now();
-        this.expiresAt = expiresAt;
-    }
 
     // Constructor completo (excepto ID y createdAt autogenerados)
-    public UserSession(User user, String sessionToken, LocalDateTime expiresAt, LocalDateTime createdAt) {
-        this.user = user;
-        this.sessionToken = sessionToken;
-        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
-        this.expiresAt = expiresAt;
-    }
 
     // Getters y Setters
 
@@ -94,4 +76,16 @@ public class UserSession {
 
     // toString sin navegación a objetos relacionados (solo IDs)
 
+    @Override
+    public String toString() {
+        return "UserSession{" +
+                "sessionId=" + sessionId +
+                ", userId=" + (user != null ? user.getUserId() : null) +
+                ", sessionToken='" + sessionToken + '\'' +
+                ", createdAt=" + createdAt +
+                ", expiresAt=" + expiresAt +
+                ", isGuest=" + isGuestSession() +
+                ", isExpired=" + isExpired() +
+                '}';
+    }
 }
