@@ -36,7 +36,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class Product {
 
     private Long productId;
@@ -63,19 +63,20 @@ public class Product {
     }
 
     // Constructor completo (excepto ID y timestamp autogenerados)
-    public Product(Category category, String sku, String name, String description,
-                   BigDecimal price, Integer stockQty, Boolean isActive) {
-        this.category = category;
-        this.sku = sku;
-        this.name = name;
-        this.description = description;
-        this.price = price;
-        this.stockQty = stockQty;
-        this.isActive = isActive != null ? isActive : true;
-        this.createdAt = LocalDateTime.now();
-    }
 
     // Getters y Setters
+
+    // Setters personalizados con validación (override de Lombok)
+
+    public void setPrice(BigDecimal price) {
+        ValidationUtils.validateNonNegative(price, "price");
+        this.price = price;
+    }
+
+    public void setStockQty(Integer stockQty) {
+        ValidationUtils.validateNonNegative(stockQty, "stockQty");
+        this.stockQty = stockQty;
+    }
 
     // Método helper para verificar disponibilidad
     public boolean isAvailable() {
@@ -99,4 +100,18 @@ public class Product {
 
     // toString sin navegación a objetos relacionados (solo IDs)
 
+    @Override
+    public String toString() {
+        return "Product{" +
+                "productId=" + productId +
+                ", categoryId=" + (category != null ? category.getCategoryId() : null) +
+                ", sku='" + sku + '\'' +
+                ", name='" + name + '\'' +
+                ", price=" + price +
+                ", stockQty=" + stockQty +
+                ", isActive=" + isActive +
+                ", isAvailable=" + isAvailable() +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }
