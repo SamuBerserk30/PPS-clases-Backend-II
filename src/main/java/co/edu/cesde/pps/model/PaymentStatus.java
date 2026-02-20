@@ -53,4 +53,12 @@ public class PaymentStatus {
 
     // toString sin navegación a objetos relacionados
 
+    @Override
+    public String toString() {
+        return "PaymentStatus{" +
+                "paymentStatusId=" + paymentStatusId +
+                ", name='" + name + '\'' +
+                '}';
+    }
+
 }
