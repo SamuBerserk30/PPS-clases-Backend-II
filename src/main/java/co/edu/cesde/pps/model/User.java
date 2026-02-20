@@ -41,7 +41,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class User {
 
     private Long userId;
@@ -72,18 +72,6 @@ public class User {
     }
 
     // Constructor completo (excepto ID y timestamp autogenerados)
-    public User(Role role, String email, String passwordHash, String firstName, String lastName,
-                String phone, UserStatus status) {
-        this.role = role;
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.phone = phone;
-        this.status = status != null ? status : UserStatus.ACTIVE;
-        this.createdAt = LocalDateTime.now();
-        this.addresses = new ArrayList<>();
-    }
 
     // Getters y Setters
 
@@ -123,4 +111,18 @@ public class User {
 
     // toString sin navegación a objetos relacionados (solo IDs y tamaño de colecciones)
 
+    @Override
+    public String toString() {
+        return "User{" +
+                "userId=" + userId +
+                ", role=" + (role != null ? role.getName() : "null") +
+                ", email='" + email + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", phone='" + phone + '\'' +
+                ", status=" + status +
+                ", createdAt=" + createdAt +
+                ", addressesCount=" + (addresses != null ? addresses.size() : 0) +
+                '}';
+    }
 }
