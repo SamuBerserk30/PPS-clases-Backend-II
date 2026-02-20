@@ -21,7 +21,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class PaymentMethod {
 
     private Long paymentMethodId;
@@ -53,4 +53,11 @@ public class PaymentMethod {
 
     // toString sin navegación a objetos relacionados
 
+    @Override
+    public String toString() {
+        return "PaymentMethod{" +
+                "paymentMethodId=" + paymentMethodId +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }
