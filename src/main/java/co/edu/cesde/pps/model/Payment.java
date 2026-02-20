@@ -43,7 +43,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
+
 public class Payment {
 
     private Long paymentId;
@@ -69,18 +69,16 @@ public class Payment {
     }
 
     // Constructor completo (excepto ID autogenerado)
-    public Payment(Order order, PaymentMethod paymentMethod, PaymentStatus paymentStatus,
-                   BigDecimal amount, Currency currency, String providerReference, LocalDateTime paidAt) {
-        this.order = order;
-        this.paymentMethod = paymentMethod;
-        this.paymentStatus = paymentStatus;
-        this.amount = amount;
-        this.currency = currency;
-        this.providerReference = providerReference;
-        this.paidAt = paidAt;
-    }
 
     // Getters y Setters
+
+    // Setter personalizado con validación (override de Lombok)
+
+    public void setAmount(BigDecimal amount) {
+        // Validación: amount puede ser negativo (reembolsos), pero no null
+        ValidationUtils.validateNotNull(amount, "amount");
+        this.amount = amount;
+    }
 
     // Método helper para verificar si el pago está completado
     public boolean isPaid() {
@@ -109,4 +107,19 @@ public class Payment {
 
     // toString sin navegación a objetos relacionados (solo IDs)
 
+    @Override
+    public String toString() {
+        return "Payment{" +
+                "paymentId=" + paymentId +
+                ", orderId=" + (order != null ? order.getOrderId() : null) +
+                ", paymentMethodId=" + (paymentMethod != null ? paymentMethod.getPaymentMethodId() : null) +
+                ", paymentStatusId=" + (paymentStatus != null ? paymentStatus.getPaymentStatusId() : null) +
+                ", amount=" + amount +
+                ", currency=" + currency +
+                ", providerReference='" + providerReference + '\'' +
+                ", paidAt=" + paidAt +
+                ", isPaid=" + isPaid() +
+                ", isRefund=" + isRefund() +
+                '}';
+    }
 }
