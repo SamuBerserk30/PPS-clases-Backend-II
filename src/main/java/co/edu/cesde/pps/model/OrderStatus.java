@@ -1,5 +1,6 @@
 package co.edu.cesde.pps.model;
 
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Objects;
@@ -16,6 +17,8 @@ import java.util.Objects;
  * Relaciones (futuro - etapa02):
  * - 1:N con Order (un estado puede aplicar a múltiples órdenes)
  */
+@Entity
+@Table(name = "order_statuses")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,8 +27,16 @@ import java.util.Objects;
 
 public class OrderStatus {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "order_status_id")
     private Long orderStatusId;
+
+    @Column(name = "name", nullable = false, unique = true, length = 50)
     private String name;
+
+    @Column(name = "description", length = 255)
+    private String description;
 
     // Constructor vacío (requerido para JPA futuro)
 
