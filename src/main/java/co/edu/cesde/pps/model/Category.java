@@ -1,5 +1,6 @@
 package co.edu.cesde.pps.model;
 
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ import java.util.Objects;
  * NOTA: Los métodos de gestión bidireccional (addSubcategory, removeSubcategory) fueron movidos
  * a la capa de servicio (CategoryService) en etapa 05 para mantener el modelo limpio.
  */
+@Entity
+@Table(name = "categories")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,10 +38,18 @@ import java.util.Objects;
 @Builder
 
 public class Category {
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "category_id")
     private Long categoryId;
+
+    @Column(name = "parent_id")
     private Category parent; // Nullable - NULL para categorías raíz
+
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
+
+    @Column(name = "slug", nullable = false, unique = true, length = 100)
     private String slug;
 
     // Colecciones para relaciones 1:N

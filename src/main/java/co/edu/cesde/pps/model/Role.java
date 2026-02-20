@@ -19,7 +19,7 @@ import java.util.Objects;
  * - 1:N con User (un rol puede tener múltiples usuarios)
  */
 @Entity
-@Table(name = "role")
+@Table(name = "roles")
 @Getter
 @Setter
 @NoArgsConstructor
