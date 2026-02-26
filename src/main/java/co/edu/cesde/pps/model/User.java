@@ -51,25 +51,20 @@ public class User {
     private String firstName;
     private String lastName;
     private String phone;
-    private UserStatus status;
-    private LocalDateTime createdAt;
+
+    @Builder.Default
+    private UserStatus status= UserStatus.ACTIVE;
+
+    @Builder.Default
+    private LocalDateTime createdAt= LocalDateTime.now();
 
     // Colecciones para relaciones 1:N
-    private List<Address> addresses;
+    @Builder.Default
+    private List<Address> addresses = new ArrayList<>();
 
     // Constructor vacío (requerido para JPA futuro)
 
     // Constructor con campos obligatorios
-    public User(Role role, String email, String passwordHash, String firstName, String lastName) {
-        this.role = role;
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.status = UserStatus.ACTIVE; // Por defecto activo
-        this.createdAt = LocalDateTime.now();
-        this.addresses = new ArrayList<>();
-    }
 
     // Constructor completo (excepto ID y timestamp autogenerados)
 

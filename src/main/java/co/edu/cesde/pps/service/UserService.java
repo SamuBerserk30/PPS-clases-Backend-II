@@ -76,12 +76,17 @@ public class UserService {
         defaultRole.setRoleId(2L); // CUSTOMER
         defaultRole.setName("CUSTOMER");
 
-        User user = new User(defaultRole, email.toLowerCase().trim(), passwordHash,
-                            firstName.trim(), lastName.trim());
-        user.setUserId(generateNextId()); // Simula auto-increment
-        user.setPhone(phone != null ? phone.trim() : null);
-        user.setStatus(UserStatus.ACTIVE);
-        user.setCreatedAt(LocalDateTime.now());
+        User user = User.builder()
+                .userId(generateNextId())
+                .role(defaultRole)
+                .email(email.toLowerCase().trim())
+                .passwordHash(passwordHash)
+                .firstName(firstName.trim())
+                .lastName(lastName.trim())
+                .phone(phone != null ? phone.trim() : null)
+                .status(UserStatus.ACTIVE)
+                .createdAt(LocalDateTime.now())
+                .build();
 
         // TODO Etapa 06: userRepository.save(user);
         usersInMemory.add(user);
