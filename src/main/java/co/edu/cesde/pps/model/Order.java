@@ -74,20 +74,6 @@ public class Order {
     private List<OrderItem> items = new ArrayList<>();
 
     // Constructor con campos obligatorios
-    public Order(String orderNumber, Long userId, Long orderStatusId,
-                 Long shippingAddressId, Long billingAddressId) {
-        this.orderNumber = orderNumber;
-        this.userId = userId;
-        this.orderStatusId = orderStatusId;
-        this.shippingAddressId = shippingAddressId;
-        this.billingAddressId = billingAddressId;
-        this.subtotal = BigDecimal.ZERO;
-        this.tax = BigDecimal.ZERO;
-        this.shippingCost = BigDecimal.ZERO;
-        this.total = BigDecimal.ZERO;
-        this.createdAt = LocalDateTime.now();
-        this.items = new ArrayList<>();
-    }
 
     // Constructor completo (excepto ID y timestamp autogenerado)
 
