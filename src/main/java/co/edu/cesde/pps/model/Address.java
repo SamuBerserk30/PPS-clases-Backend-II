@@ -44,7 +44,8 @@ public class Address {
     private String state;
     private String country;
     private String postalCode;
-    private Boolean isDefault;
+    @Builder.Default
+    private Boolean isDefault = false;
 
 
     // Constructor con campos obligatorios
