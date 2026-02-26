@@ -53,8 +53,10 @@ public class Category {
     private String slug;
 
     // Colecciones para relaciones 1:N
-    private List<Category> subcategories;
-    private List<Product> products;
+    @Builder.Default
+    private List<Category> subcategories = new ArrayList<>();
+    @Builder.Default
+    private List<Product> products = new ArrayList<>();
 
     // Constructor vacío (requerido para JPA futuro)
     // Constructor para categoría raíz (sin parent)
