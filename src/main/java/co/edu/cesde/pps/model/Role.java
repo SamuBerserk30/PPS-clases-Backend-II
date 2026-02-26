@@ -42,9 +42,6 @@ public class Role {
     // Constructor vacío (requerido para JPA futuro)
 
     // Constructor con campos obligatorios
-    public Role(String name) {
-        this.name = name;
-    }
 
     // Constructor completo (excepto ID autogenerado)
 
