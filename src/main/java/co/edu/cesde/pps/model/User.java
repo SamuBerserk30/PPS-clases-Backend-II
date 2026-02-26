@@ -1,6 +1,7 @@
 package co.edu.cesde.pps.model;
 
 import co.edu.cesde.pps.enums.UserStatus;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -36,6 +37,8 @@ import java.util.Objects;
  * NOTA: Los métodos de gestión bidireccional (addAddress, removeAddress) fueron movidos
  * a la capa de servicio (UserService) en etapa 05 para mantener el modelo limpio.
  */
+@Entity
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -44,22 +47,40 @@ import java.util.Objects;
 
 public class User {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long userId;
+
+    @Column(name = "role_id", nullable = false)
     private Role role;
+
+    @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
+
+    @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
+
+    @Column(name = "first_name", nullable = false, length = 50)
     private String firstName;
+
+    @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
+
+    @Column(name = "phone", length = 20)
     private String phone;
 
     @Builder.Default
+    @Column(name = "status", nullable = false, length = 20)
     private UserStatus status= UserStatus.ACTIVE;
 
     @Builder.Default
+    @Column(name = "created_at", nullable = false, length = 50)
     private LocalDateTime createdAt= LocalDateTime.now();
 
     // Colecciones para relaciones 1:N
     @Builder.Default
+    @Column(name = "addresses", nullable = false, length = 50)
     private List<Address> addresses = new ArrayList<>();
 
     // Constructor vacío (requerido para JPA futuro)
