@@ -58,17 +58,20 @@ public class Order {
     private Long orderStatusId;
     private Long shippingAddressId;
     private Long billingAddressId;
-    private BigDecimal subtotal;
-    private BigDecimal tax;
-    private BigDecimal shippingCost;
-    private BigDecimal total;
     @Builder.Default
-    private Boolean isActive = true;
+    private BigDecimal subtotal = BigDecimal.ZERO;
+    @Builder.Default
+    private BigDecimal tax = BigDecimal.ZERO;
+    @Builder.Default
+    private BigDecimal shippingCost = BigDecimal.ZERO;
+    @Builder.Default
+    private BigDecimal total = BigDecimal.ZERO;
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     // Colección para relación 1:N con OrderItem
-    private List<OrderItem> items;
+    @Builder.Default
+    private List<OrderItem> items = new ArrayList<>();
 
     // Constructor con campos obligatorios
     public Order(String orderNumber, Long userId, Long orderStatusId,
