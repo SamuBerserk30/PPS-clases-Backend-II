@@ -30,9 +30,6 @@ public class PaymentMethod {
     // Constructor vacío (requerido para JPA futuro)
 
     // Constructor con campos obligatorios
-    public PaymentMethod(String name) {
-        this.name = name;
-    }
 
     // Getters y Setters
 
