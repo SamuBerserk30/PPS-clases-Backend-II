@@ -62,7 +62,10 @@ public class Order {
     private BigDecimal tax;
     private BigDecimal shippingCost;
     private BigDecimal total;
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private Boolean isActive = true;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     // Colección para relación 1:N con OrderItem
     private List<OrderItem> items;
