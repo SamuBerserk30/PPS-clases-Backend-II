@@ -182,9 +182,14 @@ public class CartService {
             existingItem.setQuantity(newQuantity);
         } else {
             // Producto nuevo: crear CartItem y gestión bidireccional
-            CartItem newItem = new CartItem(cart, product, quantity, product.getPrice());
-            newItem.setCartItemId(generateNextCartItemId());
-            newItem.setAddedAt(LocalDateTime.now());
+            CartItem newItem = CartItem.builder()
+                    .cartItemId(generateNextCartItemId())
+                    .cart(cart)
+                    .product(product)
+                    .quantity(quantity)
+                    .unitPrice(product.getPrice())
+                    .addedAt(LocalDateTime.now())
+                    .build();
 
             cart.getItems().add(newItem);      // Agregar a colección del carrito
             newItem.setCart(cart);             // Establecer referencia al carrito
@@ -391,11 +396,14 @@ public class CartService {
                 }
 
                 // Crear nuevo item en carrito de usuario
-                CartItem newItem = new CartItem(userCart, product, guestQuantity,
-                    guestItem.getUnitPrice());
-                newItem.setCartItemId(generateNextCartItemId());
-                newItem.setAddedAt(guestItem.getAddedAt());
-
+                CartItem newItem = CartItem.builder()
+                        .cartItemId(generateNextCartItemId())
+                        .cart(userCart)
+                        .product(product)
+                        .quantity(guestQuantity)
+                        .unitPrice(product.getPrice())
+                        .addedAt(LocalDateTime.now())
+                        .build();
                 // Gestión bidireccional
                 userCart.getItems().add(newItem);
                 newItem.setCart(userCart);

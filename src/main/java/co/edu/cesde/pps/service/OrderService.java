@@ -154,6 +154,7 @@ public class OrderService {
                 .total(BigDecimal.ZERO)
                 .createdAt(LocalDateTime.now())
                 .build();
+        order.setOrderId(generateNextId());
 
         // 6. Copiar items del carrito a la orden (congelar precios históricos)
         for (CartItem cartItem : cart.getItems()) {
@@ -165,6 +166,7 @@ public class OrderService {
                     .unitPrice(cartItem.getUnitPrice())
                     .lineTotal(BigDecimal.ZERO) // Se calculará después
                     .build();
+            orderItem.setOrderItemId(generateNextOrderItemId());
 
             // Calcular lineTotal
             orderItem.setLineTotal(CalculationUtils.calculateOrderItemLineTotal(
