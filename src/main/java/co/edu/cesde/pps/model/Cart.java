@@ -81,12 +81,17 @@ public class Cart {
     private Long cartId;
     private User user; // Nullable - NULL para invitados
     private UserSession session;
-    private CartStatus status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    @Builder.Default private
+    CartStatus status = CartStatus.OPEN;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
 
     // Colección para relación 1:N
-    private List<CartItem> items;
+    @Builder.Default
+    private List<CartItem> items = new ArrayList<>();
 
     // Constructor para carrito de invitado
 
