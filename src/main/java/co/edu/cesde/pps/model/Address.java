@@ -49,17 +49,7 @@ public class Address {
 
 
     // Constructor con campos obligatorios
-    public Address(User user, AddressType type, String line1, String city,
-                   String state, String country, String postalCode) {
-        this.user = user;
-        this.type = type;
-        this.line1 = line1;
-        this.city = city;
-        this.state = state;
-        this.country = country;
-        this.postalCode = postalCode;
-        this.isDefault = false;
-    }
+
 
     // Constructor completo (excepto ID autogenerado)
 
