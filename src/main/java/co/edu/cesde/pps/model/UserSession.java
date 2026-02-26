@@ -36,7 +36,8 @@ public class UserSession {
     private Long sessionId;
     private User user; // Nullable - NULL para invitados
     private String sessionToken;
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime expiresAt;
 
     // Constructor vacío (requerido para JPA futuro)
