@@ -63,16 +63,16 @@ public class Order {
     @Column(name = "order_number", nullable = false, unique = true, length = 50)
     private String orderNumber;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false, length = 50)
     private Long userId; // NOT NULL - checkout requiere usuario registrado
 
-    @Column(name = "order_status_id", nullable = false)
+    @Column(name = "order_status_id", nullable = false, length = 50)
     private Long orderStatusId;
 
-    @Column(name = "shipping_address_id", nullable = false)
+    @Column(name = "shipping_address_id", nullable = false, length = 50)
     private Long shippingAddressId;
 
-    @Column(name = "billing_address_id", nullable = false)
+    @Column(name = "billing_address_id", nullable = false, length = 50)
     private Long billingAddressId;
 
     @Builder.Default
