@@ -54,8 +54,11 @@ public class Category {
 
     // Colecciones para relaciones 1:N
     @Builder.Default
+    @Column(name = "subcategories", nullable = false)
     private List<Category> subcategories = new ArrayList<>();
+
     @Builder.Default
+    @Column(name = "products", nullable = false)
     private List<Product> products = new ArrayList<>();
 
     // Constructor vacío (requerido para JPA futuro)

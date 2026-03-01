@@ -1,6 +1,7 @@
 package co.edu.cesde.pps.model;
 
 import co.edu.cesde.pps.util.ValidationUtils;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -31,6 +32,8 @@ import java.util.Objects;
  * - 1:N con CartItem (un producto puede estar en múltiples carritos)
  * - 1:N con OrderItem (un producto puede estar en múltiples órdenes)
  */
+@Entity
+@Table(name = "products")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,16 +42,35 @@ import java.util.Objects;
 
 public class Product {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "product_id", nullable = false)
     private Long productId;
+
+    @Column(name = "category_id", nullable = false)
     private Category category;
+
+    @Column(name = "sku", nullable = false, unique = true, length = 50)
     private String sku;
+
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
+
+    @Column(name = "description", nullable = false, length = 1000)
     private String description;
+
+    @Column(name = "price", nullable = false, length = 50)
     private BigDecimal price;
+
+    @Column(name = "stock_qty", nullable = false, length = 50)
     private Integer stockQty;
+
     @Builder.Default
+    @Column(name = "is_active", nullable = false, length = 50)
     private Boolean isActive = true;
+
     @Builder.Default
+    @Column(name = "created_at", nullable = false, length = 50)
     private LocalDateTime createdAt = LocalDateTime.now();
     // Constructor vacío (requerido para JPA futuro)
 
