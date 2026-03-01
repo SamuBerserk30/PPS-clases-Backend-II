@@ -2,6 +2,7 @@ package co.edu.cesde.pps.model;
 
 import co.edu.cesde.pps.util.CalculationUtils;
 import co.edu.cesde.pps.util.ValidationUtils;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -34,6 +35,8 @@ import java.util.Objects;
  * - N:1 con Cart (muchos items pertenecen a un carrito)
  * - N:1 con Product (muchos items referencian a un producto)
  */
+@Entity
+@Table(name = "cart_items")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -42,11 +45,24 @@ import java.util.Objects;
 
 public class CartItem {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "cart_item_id", nullable = false)
     private Long cartItemId;
+
+    @Column(name = "cart_id", nullable = false)
     private Cart cart;
+
+    @Column(name = "product_id", nullable = false)
     private Product product;
+
+    @Column(name = "quantity", nullable = false)
     private Integer quantity;
+
+    @Column(name = "unit_price", nullable = false)
     private BigDecimal unitPrice;
+
+    @Column(name = "added_at", nullable = false)
     private LocalDateTime addedAt;
 
     // Constructor con campos obligatorios
