@@ -2,6 +2,7 @@ package co.edu.cesde.pps.model;
 
 import co.edu.cesde.pps.enums.CartStatus;
 import co.edu.cesde.pps.util.CalculationUtils;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -70,6 +71,8 @@ import java.util.stream.Collectors;
  * NOTA: Los métodos de gestión bidireccional (addItem, removeItem) fueron movidos
  * a la capa de servicio (CartService) en etapa 05 para mantener el modelo limpio.
  */
+@Entity
+@Table(name = "carts")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -78,19 +81,33 @@ import java.util.stream.Collectors;
 
 public class Cart {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "cart_id")
     private Long cartId;
+
+    @Column(name = "user_id", nullable = true) // Nullable para permitir carritos de invitado
     private User user; // Nullable - NULL para invitados
+
+    @Column(name = "session_id", nullable = false) // Siempre requerido para rastrear carritos
     private UserSession session;
+
     @Builder.Default private
+    @Column(name = "status", nullable = false, length = 20)
     CartStatus status = CartStatus.OPEN;
+
     @Builder.Default
+    @Column(name = "created_at", nullable = false, length = 50)
     private LocalDateTime createdAt = LocalDateTime.now();
+
     @Builder.Default
+    @Column(name = "updated_at", nullable = false, length = 50)
     private LocalDateTime updatedAt = LocalDateTime.now();
 
 
     // Colección para relación 1:N
     @Builder.Default
+    @Column(name = "items", nullable = false)
     private List<CartItem> items = new ArrayList<>();
 
     // Constructor para carrito de invitado
