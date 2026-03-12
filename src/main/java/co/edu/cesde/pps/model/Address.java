@@ -1,6 +1,7 @@
 package co.edu.cesde.pps.model;
 
 import co.edu.cesde.pps.enums.AddressType;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,7 +42,9 @@ public class Address {
     @Column(name = "address_id")
     private Long addressId;
 
-    @Column(name = "user_id", nullable = false, length = 50)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonManagedReference("user-address")
     private User user;
 
     @Column(name = "type", nullable = false, length = 20)
