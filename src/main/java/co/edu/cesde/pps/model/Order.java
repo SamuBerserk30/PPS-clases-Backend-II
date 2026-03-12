@@ -63,16 +63,20 @@ public class Order {
     @Column(name = "order_number", nullable = false, unique = true, length = 50)
     private String orderNumber;
 
-    @Column(name = "user_id", nullable = false, length = 50)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false) // NOT NULL para requer
     private Long userId; // NOT NULL - checkout requiere usuario registrado
 
-    @Column(name = "order_status_id", nullable = false, length = 50)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_status_id", nullable = false)
     private Long orderStatusId;
 
-    @Column(name = "shipping_address_id", nullable = false, length = 50)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipping_address_id", nullable = false)
     private Long shippingAddressId;
 
-    @Column(name = "billing_address_id", nullable = false, length = 50)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "billing_address_id", nullable = false)
     private Long billingAddressId;
 
     @Builder.Default
@@ -96,6 +100,7 @@ public class Order {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     // Colección para relación 1:N con OrderItem
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @Column(name = "items", nullable = false)
     private List<OrderItem> items = new ArrayList<>();
