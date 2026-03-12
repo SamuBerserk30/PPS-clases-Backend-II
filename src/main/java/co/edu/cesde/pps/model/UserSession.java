@@ -41,7 +41,8 @@ public class UserSession {
     @Column(name = "session_id")
     private Long sessionId;
 
-    @Column(name = "user_id", nullable = false, length = 50)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true) // Nullable para permitir sesiones
     private User user;
 
     @Column(name = "session_token", nullable = false, unique = true, length = 100)
