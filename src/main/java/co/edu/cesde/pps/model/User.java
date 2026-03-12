@@ -1,6 +1,7 @@
 package co.edu.cesde.pps.model;
 
 import co.edu.cesde.pps.enums.UserStatus;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -52,7 +53,8 @@ public class User {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "role_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
     @Column(name = "email", nullable = false, unique = true, length = 100)
@@ -79,8 +81,9 @@ public class User {
     private LocalDateTime createdAt= LocalDateTime.now();
 
     // Colecciones para relaciones 1:N
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonManagedReference("user-address")
     @Builder.Default
-    @Column(name = "addresses", nullable = false, length = 50)
     private List<Address> addresses = new ArrayList<>();
 
     // Constructor vacío (requerido para JPA futuro)
