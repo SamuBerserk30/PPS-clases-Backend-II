@@ -1,5 +1,6 @@
 package co.edu.cesde.pps.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -43,7 +44,9 @@ public class Category {
     @Column(name = "category_id")
     private Long categoryId;
 
-    @Column(name = "parent_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    @JsonBackReference("category-subcategories")
     private Category parent; // Nullable - NULL para categorías raíz
 
     @Column(name = "name", nullable = false, length = 100)
@@ -53,10 +56,12 @@ public class Category {
     private String slug;
 
     // Colecciones para relaciones 1:N
+    @ManyToOne(fetch = FetchType.LAZY)
     @Builder.Default
     @Column(name = "subcategories", nullable = false)
     private List<Category> subcategories = new ArrayList<>();
 
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     @Builder.Default
     @Column(name = "products", nullable = false)
     private List<Product> products = new ArrayList<>();
