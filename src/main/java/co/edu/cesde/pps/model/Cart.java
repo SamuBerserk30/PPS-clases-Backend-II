@@ -2,6 +2,7 @@ package co.edu.cesde.pps.model;
 
 import co.edu.cesde.pps.enums.CartStatus;
 import co.edu.cesde.pps.util.CalculationUtils;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -86,10 +87,13 @@ public class Cart {
     @Column(name = "cart_id")
     private Long cartId;
 
-    @Column(name = "user_id", nullable = true) // Nullable para permitir carritos de invitado
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonManagedReference("user-cart")
+    @JoinColumn(name = "user_id") // Nullable por diseño para permitir carritos de invitado
     private User user; // Nullable - NULL para invitados
 
-    @Column(name = "session_id", nullable = false) // Siempre requerido para rastrear carritos
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id", nullable = false) // Siempre requerido para rastrear carritos
     private UserSession session;
 
     @Builder.Default private
@@ -106,6 +110,7 @@ public class Cart {
 
 
     // Colección para relación 1:N
+    @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @Column(name = "items", nullable = false)
     private List<CartItem> items = new ArrayList<>();
