@@ -2,6 +2,7 @@ package co.edu.cesde.pps.model;
 
 import co.edu.cesde.pps.util.CalculationUtils;
 import co.edu.cesde.pps.util.ValidationUtils;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -101,6 +102,7 @@ public class Order {
 
     // Colección para relación 1:N con OrderItem
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("order-items")
     @Builder.Default
     @Column(name = "items", nullable = false)
     private List<OrderItem> items = new ArrayList<>();
