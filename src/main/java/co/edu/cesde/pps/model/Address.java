@@ -1,6 +1,7 @@
 package co.edu.cesde.pps.model;
 
 import co.edu.cesde.pps.enums.AddressType;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -44,7 +45,7 @@ public class Address {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonManagedReference("user-address")
+    @JsonBackReference("user-address")
     private User user;
 
     @Column(name = "type", nullable = false, length = 20)
