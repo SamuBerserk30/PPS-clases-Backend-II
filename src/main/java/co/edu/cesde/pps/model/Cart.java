@@ -111,6 +111,7 @@ public class Cart {
 
     // Colección para relación 1:N
     @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("cart-items")
     @Builder.Default
     @Column(name = "items", nullable = false)
     private List<CartItem> items = new ArrayList<>();
