@@ -1,6 +1,8 @@
 package co.edu.cesde.pps.dto;
 
 import co.edu.cesde.pps.enums.UserStatus;
+import co.edu.cesde.pps.model.User;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 

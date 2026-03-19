@@ -42,13 +42,11 @@ import java.util.Objects;
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonBackReference("category-parent")
     @Column(name = "category_id")
     private Long categoryId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
-    @JsonBackReference("category-subcategories")
     private Category parent; // Nullable - NULL para categorías raíz
 
     @Column(name = "name", nullable = false, length = 100)
@@ -58,15 +56,12 @@ public class Category {
     private String slug;
 
     // Colecciones para relaciones 1:N
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonManagedReference("category-parent")
+    @OneToMany(fetch = FetchType.LAZY)
     @Builder.Default
-    @Column(name = "subcategories", nullable = false)
     private List<Category> subcategories = new ArrayList<>();
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     @Builder.Default
-    @Column(name = "products", nullable = false)
     private List<Product> products = new ArrayList<>();
 
     // Constructor vacío (requerido para JPA futuro)

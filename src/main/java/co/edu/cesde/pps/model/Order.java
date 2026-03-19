@@ -66,19 +66,20 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false) // NOT NULL para requer
-    private Long userId; // NOT NULL - checkout requiere usuario registrado
+    private User userId; // NOT NULL - checkout requiere usuario registrado
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_status_id", nullable = false)
-    private Long orderStatusId;
+    private OrderStatus orderStatusId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipping_address_id", nullable = false)
-    private Long shippingAddressId;
+    private Address shippingAddressId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "billing_address_id", nullable = false)
-    private Long billingAddressId;
+    @JsonManagedReference("billing-address-orders")
+    private Address billingAddressId;
 
     @Builder.Default
     @Column(name = "subtotal", nullable = false, length = 50)

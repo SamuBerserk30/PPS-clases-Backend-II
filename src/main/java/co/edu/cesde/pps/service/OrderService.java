@@ -144,17 +144,12 @@ public class OrderService {
         Order order = Order.builder()
                 .orderId(generateNextId())
                 .orderNumber(orderNumber)
-                .userId(userId)
-                .orderStatusId(1L)
-                .shippingAddressId(shippingAddressId)
-                .billingAddressId(billingAddressId)
-                .subtotal(BigDecimal.ZERO)
-                .tax(BigDecimal.ZERO)
-                .shippingCost(BigDecimal.ZERO)
-                .total(BigDecimal.ZERO)
+                .userId(cart.getUser())
+                .shippingAddressId(shippingAddress)
+                .billingAddressId(billingAddress)
                 .createdAt(LocalDateTime.now())
+                .items(new ArrayList<>())
                 .build();
-        order.setOrderId(generateNextId());
 
         // 6. Copiar items del carrito a la orden (congelar precios históricos)
         for (CartItem cartItem : cart.getItems()) {
