@@ -47,6 +47,7 @@ public class Category {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
+    @JsonBackReference("category-parent")
     private Category parent; // Nullable - NULL para categorías raíz
 
     @Column(name = "name", nullable = false, length = 100)
@@ -56,7 +57,8 @@ public class Category {
     private String slug;
 
     // Colecciones para relaciones 1:N
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+    @JsonManagedReference("category-parent")
     @Builder.Default
     private List<Category> subcategories = new ArrayList<>();
 

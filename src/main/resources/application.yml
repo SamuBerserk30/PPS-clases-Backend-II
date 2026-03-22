@@ -9,7 +9,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: ${DB_DDL_AUTO:update}
-    open-in-value: false
+    open-in-view: false
     show-sql: ${DB_SHOW_SQL:true}
     properties:
       hibernate:

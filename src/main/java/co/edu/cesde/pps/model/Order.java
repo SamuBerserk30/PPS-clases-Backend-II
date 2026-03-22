@@ -65,47 +65,44 @@ public class Order {
     private String orderNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false) // NOT NULL para requer
-    private User userId; // NOT NULL - checkout requiere usuario registrado
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user; // NOT NULL - checkout requiere usuario registrado
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_status_id", nullable = false)
-    private OrderStatus orderStatusId;
+    private OrderStatus orderStatus;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipping_address_id", nullable = false)
-    private Address shippingAddressId;
+    private Address shippingAddress;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "billing_address_id", nullable = false)
-    @JsonManagedReference("billing-address-orders")
-    private Address billingAddressId;
+    private Address billingAddress;
 
+    @Column(name = "subtotal", nullable = false, precision = 10, scale = 2)
     @Builder.Default
-    @Column(name = "subtotal", nullable = false, length = 50)
     private BigDecimal subtotal = BigDecimal.ZERO;
 
+    @Column(name = "tax", nullable = false, precision = 10, scale = 2)
     @Builder.Default
-    @Column(name = "tax", nullable = false, length = 50)
     private BigDecimal tax = BigDecimal.ZERO;
 
+    @Column(name = "shipping_cost", nullable = false, precision = 10, scale = 2)
     @Builder.Default
-    @Column(name = "shipping_cost", nullable = false, length = 50)
     private BigDecimal shippingCost = BigDecimal.ZERO;
 
+    @Column(name = "total", nullable = false, precision = 10, scale = 2)
     @Builder.Default
-    @Column(name = "total", nullable = false, length = 50)
     private BigDecimal total = BigDecimal.ZERO;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
-    @Column(name = "created_at", nullable = false, length = 50)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // Colección para relación 1:N con OrderItem
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("order-items")
     @Builder.Default
-    @Column(name = "items", nullable = false)
     private List<OrderItem> items = new ArrayList<>();
 
     // Constructor con campos obligatorios
@@ -163,10 +160,10 @@ public class Order {
         return "Order{" +
                 "orderId=" + orderId +
                 ", orderNumber='" + orderNumber + '\'' +
-                ", userId=" + userId +
-                ", orderStatusId=" + orderStatusId +
-                ", shippingAddressId=" + shippingAddressId +
-                ", billingAddressId=" + billingAddressId +
+                ", userId=" + user +
+                ", orderStatusId=" + orderStatus +
+                ", shippingAddressId=" + shippingAddress +
+                ", billingAddressId=" + billingAddress +
                 ", subtotal=" + subtotal +
                 ", tax=" + tax +
                 ", shippingCost=" + shippingCost +

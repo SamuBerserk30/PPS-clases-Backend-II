@@ -144,9 +144,9 @@ public class OrderService {
         Order order = Order.builder()
                 .orderId(generateNextId())
                 .orderNumber(orderNumber)
-                .userId(cart.getUser())
-                .shippingAddressId(shippingAddress)
-                .billingAddressId(billingAddress)
+                .user(cart.getUser())
+                .shippingAddress(shippingAddress)
+                .billingAddress(billingAddress)
                 .createdAt(LocalDateTime.now())
                 .items(new ArrayList<>())
                 .build();
@@ -245,7 +245,7 @@ public class OrderService {
 
         // TODO Etapa 06: List<Order> orders = orderRepository.findByUserId(userId);
         List<Order> userOrders = ordersInMemory.stream()
-                .filter(o -> o.getUserId().equals(userId))
+                .filter(o -> o.getUser().equals(userId))
                 .collect(Collectors.toList());
 
         return orderMapper.toDTOList(userOrders);
@@ -260,7 +260,7 @@ public class OrderService {
     public List<OrderDTO> findOrdersByStatus(Long statusId) {
         // TODO Etapa 06: List<Order> orders = orderRepository.findByOrderStatusId(statusId);
         List<Order> statusOrders = ordersInMemory.stream()
-                .filter(o -> o.getOrderStatusId().equals(statusId))
+                .filter(o -> o.getOrderStatus().equals(statusId))
                 .collect(Collectors.toList());
 
         return orderMapper.toDTOList(statusOrders);

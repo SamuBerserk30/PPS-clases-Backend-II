@@ -35,8 +35,8 @@ public class OrderMapper {
         OrderDTO dto = new OrderDTO();
         dto.setOrderId(order.getOrderId());
         dto.setOrderNumber(order.getOrderNumber());
-        if(order.getUserId() != null){
-            dto.setUserId(order.getUserId().getUserId());
+        if(order.getUser() != null){
+            dto.setUserId(order.getUser().getUserId());
         }
 
         // TODO: En etapa 06 con JPA, cargar user para obtener email y fullName
