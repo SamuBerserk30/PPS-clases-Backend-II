@@ -8,6 +8,8 @@ import co.edu.cesde.pps.mapper.CategoryMapper;
 import co.edu.cesde.pps.model.Category;
 import co.edu.cesde.pps.util.StringUtils;
 import co.edu.cesde.pps.util.ValidationUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,8 @@ import java.util.stream.Collectors;
  * - Inyección de CategoryRepository
  * - Persistencia real
  */
+@Service
+@Transactional(readOnly = true)
 public class CategoryService {
 
     private final CategoryMapper categoryMapper;
@@ -48,6 +52,7 @@ public class CategoryService {
      * @return CategoryDTO de la categoría creada
      * @throws DuplicateEntityException si el slug ya existe
      */
+    @Transactional
     public CategoryDTO createCategory(CategoryDTO categoryDTO) {
         // Validaciones
         ValidationUtils.validateNotBlank(categoryDTO.getName(), "name");
@@ -90,6 +95,7 @@ public class CategoryService {
      * @throws DuplicateEntityException si el nuevo slug ya existe
      * @throws ValidationException si hay ciclo en jerarquía
      */
+    @Transactional
     public CategoryDTO updateCategory(Long categoryId, CategoryDTO categoryDTO) {
         Category category = findCategoryEntityOrThrow(categoryId);
 
@@ -142,6 +148,7 @@ public class CategoryService {
      * @throws EntityNotFoundException si no existe
      * @throws ValidationException si tiene subcategorías o productos
      */
+    @Transactional
     public void deleteCategory(Long categoryId) {
         Category category = findCategoryEntityOrThrow(categoryId);
 
@@ -239,6 +246,7 @@ public class CategoryService {
      * @throws EntityNotFoundException si el padre no existe
      * @throws DuplicateEntityException si el slug ya existe
      */
+    @Transactional
     public CategoryDTO addSubcategory(Long parentId, CategoryDTO subcategoryDTO) {
         Category parent = findCategoryEntityOrThrow(parentId);
 
@@ -278,6 +286,7 @@ public class CategoryService {
      * @throws EntityNotFoundException si no existen
      * @throws ValidationException si la subcategoría no pertenece al padre
      */
+    @Transactional
     public void removeSubcategory(Long parentId, Long subcategoryId) {
         Category parent = findCategoryEntityOrThrow(parentId);
         Category subcategory = findCategoryEntityOrThrow(subcategoryId);

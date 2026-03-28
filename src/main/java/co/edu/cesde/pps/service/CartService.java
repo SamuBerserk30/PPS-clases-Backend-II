@@ -14,6 +14,8 @@ import co.edu.cesde.pps.model.Product;
 import co.edu.cesde.pps.model.User;
 import co.edu.cesde.pps.util.CalculationUtils;
 import co.edu.cesde.pps.util.ValidationUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -40,6 +42,8 @@ import java.util.stream.Collectors;
  * - Inyección de CartRepository
  * - Persistencia real
  */
+@Service
+@Transactional(readOnly = true)
 public class CartService {
 
     private final CartMapper cartMapper;
@@ -61,6 +65,7 @@ public class CartService {
      * @param sessionId ID de la sesión
      * @return CartDTO del carrito creado
      */
+    @Transactional
     public CartDTO createCartForGuest(Long sessionId) {
         Cart cart = new Cart();
         cart.setCartId(generateNextId());
@@ -82,6 +87,7 @@ public class CartService {
      * @return CartDTO del carrito creado
      * @throws EntityNotFoundException si el usuario no existe
      */
+    @Transactional
     public CartDTO createCartForUser(Long userId) {
         User user = userService.findUserEntityOrThrow(userId);
 
@@ -140,6 +146,7 @@ public class CartService {
      * @throws InsufficientStockException si no hay stock suficiente
      * @throws ValidationException si el producto no está activo
      */
+    @Transactional
     public CartDTO addItem(Long cartId, Long productId, Integer quantity) {
         // Validar cantidad
         ValidationUtils.validatePositive(quantity, "quantity");
@@ -215,6 +222,7 @@ public class CartService {
      * @throws InsufficientStockException si no hay stock suficiente
      * @throws ValidationException si el producto no está en el carrito
      */
+    @Transactional
     public CartDTO updateItemQuantity(Long cartId, Long productId, Integer newQuantity) {
         ValidationUtils.validatePositive(newQuantity, "quantity");
 
@@ -255,6 +263,7 @@ public class CartService {
      * @throws InvalidCartStateException si el carrito no está OPEN
      * @throws ValidationException si el producto no está en el carrito
      */
+    @Transactional
     public CartDTO removeItem(Long cartId, Long productId) {
         Cart cart = findCartEntityOrThrow(cartId);
         if (cart.getStatus() != CartStatus.OPEN) {
@@ -286,6 +295,7 @@ public class CartService {
      * @throws EntityNotFoundException si no existe
      * @throws InvalidCartStateException si el carrito no está OPEN
      */
+    @Transactional
     public void clearCart(Long cartId) {
         Cart cart = findCartEntityOrThrow(cartId);
         if (cart.getStatus() != CartStatus.OPEN) {
@@ -338,6 +348,7 @@ public class CartService {
      * @throws CartMergeException si el carrito guest ya tiene usuario asignado
      * @throws InsufficientStockException si no hay stock suficiente para cantidad fusionada
      */
+    @Transactional
     public CartDTO mergeGuestCartToUserCart(Long guestCartId, Long userId) {
         // 1. Obtener ambos carritos
         Cart guestCart = findCartEntityOrThrow(guestCartId);
@@ -439,6 +450,7 @@ public class CartService {
      *
      * @param cartId ID del carrito
      */
+    @Transactional
     public void touchCartById(Long cartId) {
         Cart cart = findCartEntityOrThrow(cartId);
         touchCart(cart);

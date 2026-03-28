@@ -9,6 +9,8 @@ import co.edu.cesde.pps.model.Category;
 import co.edu.cesde.pps.model.Product;
 import co.edu.cesde.pps.util.CalculationUtils;
 import co.edu.cesde.pps.util.ValidationUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,6 +35,8 @@ import java.util.stream.Collectors;
  * - Inyección de ProductRepository
  * - Persistencia real
  */
+@Service
+@Transactional
 public class ProductService {
 
     private final ProductMapper productMapper;
@@ -54,6 +58,7 @@ public class ProductService {
      * @throws DuplicateEntityException si el SKU ya existe
      * @throws EntityNotFoundException si la categoría no existe
      */
+    @Transactional
     public ProductDTO createProduct(ProductDTO productDTO) {
         // Validaciones
         ValidationUtils.validateNotBlank(productDTO.getSku(), "sku");
@@ -90,6 +95,7 @@ public class ProductService {
      * @throws EntityNotFoundException si no existe
      * @throws DuplicateEntityException si el nuevo SKU ya existe
      */
+    @Transactional
     public ProductDTO updateProduct(Long productId, ProductDTO productDTO) {
         Product product = findProductEntityOrThrow(productId);
 
@@ -129,6 +135,7 @@ public class ProductService {
      * @param productId ID del producto
      * @throws EntityNotFoundException si no existe
      */
+    @Transactional
     public void deleteProduct(Long productId) {
         Product product = findProductEntityOrThrow(productId);
         product.setIsActive(false);
@@ -254,6 +261,7 @@ public class ProductService {
      * @param newStock Nuevo stock
      * @throws EntityNotFoundException si el producto no existe
      */
+    @Transactional
     public void updateStock(Long productId, Integer newStock) {
         Product product = findProductEntityOrThrow(productId);
         ValidationUtils.validateNonNegative(BigDecimal.valueOf(newStock), "stock");
@@ -269,6 +277,7 @@ public class ProductService {
      * @throws EntityNotFoundException si el producto no existe
      * @throws InsufficientStockException si no hay stock suficiente
      */
+    @Transactional
     public void decreaseStock(Long productId, Integer quantity) {
         Product product = findProductEntityOrThrow(productId);
 
@@ -289,6 +298,7 @@ public class ProductService {
      * @param quantity Cantidad a aumentar
      * @throws EntityNotFoundException si el producto no existe
      */
+    @Transactional
     public void increaseStock(Long productId, Integer quantity) {
         Product product = findProductEntityOrThrow(productId);
         ValidationUtils.validatePositive(quantity, "quantity");

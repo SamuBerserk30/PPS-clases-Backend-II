@@ -10,6 +10,8 @@ import co.edu.cesde.pps.mapper.OrderMapper;
 import co.edu.cesde.pps.model.*;
 import co.edu.cesde.pps.util.CalculationUtils;
 import co.edu.cesde.pps.config.AppConfig;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -38,6 +40,8 @@ import java.util.stream.Collectors;
  * - Inyección de OrderRepository
  * - Persistencia real
  */
+@Service
+@Transactional(readOnly = true)
 public class OrderService {
 
     private final OrderMapper orderMapper;
@@ -48,6 +52,7 @@ public class OrderService {
     // TODO Etapa 06: private final OrderRepository orderRepository;
     private final List<Order> ordersInMemory;
     private final Random random;
+
 
     public OrderService(UserService userService, CartService cartService,
                        AddressService addressService, ProductService productService) {
@@ -86,6 +91,7 @@ public class OrderService {
      * @throws ValidationException si el carrito está vacío o no pertenece al usuario
      * @throws InsufficientStockException si no hay stock suficiente
      */
+    @Transactional
     public OrderDTO checkout(Long userId, Long cartId, Long shippingAddressId,
                             Long billingAddressId) {
         // 1. Validar usuario está registrado

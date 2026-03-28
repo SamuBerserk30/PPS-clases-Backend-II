@@ -56,6 +56,7 @@ public class AddressService {
      * @throws EntityNotFoundException si el usuario no existe
      * @throws ValidationException si excede máximo de direcciones
      */
+    @Transactional
     public AddressDTO addAddress(Long userId, AddressDTO addressDTO) {
         // Obtener usuario
         User user = userService.findUserEntityOrThrow(userId);
@@ -103,6 +104,7 @@ public class AddressService {
      * @return AddressDTO actualizado
      * @throws EntityNotFoundException si no existe
      */
+    @Transactional
     public AddressDTO updateAddress(Long addressId, AddressDTO addressDTO) {
         Address address = findAddressEntityOrThrow(addressId);
 
@@ -137,6 +139,7 @@ public class AddressService {
      * @throws EntityNotFoundException si no existe
      * @throws ValidationException si la dirección no pertenece al usuario
      */
+    @Transactional
     public void deleteAddress(Long userId, Long addressId) {
         User user = userService.findUserEntityOrThrow(userId);
         Address address = findAddressEntityOrThrow(addressId);
@@ -168,6 +171,7 @@ public class AddressService {
      * @throws EntityNotFoundException si no existe
      * @throws ValidationException si la dirección no pertenece al usuario
      */
+    @Transactional
     public AddressDTO setDefaultAddress(Long userId, Long addressId) {
         userService.findUserEntityOrThrow(userId); // Validar que usuario existe
         Address address = findAddressEntityOrThrow(addressId);
