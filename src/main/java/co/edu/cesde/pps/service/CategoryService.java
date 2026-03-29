@@ -6,6 +6,7 @@ import co.edu.cesde.pps.exception.EntityNotFoundException;
 import co.edu.cesde.pps.exception.ValidationException;
 import co.edu.cesde.pps.mapper.CategoryMapper;
 import co.edu.cesde.pps.model.Category;
+import co.edu.cesde.pps.repository.CategoryRepository;
 import co.edu.cesde.pps.util.StringUtils;
 import co.edu.cesde.pps.util.ValidationUtils;
 import org.springframework.stereotype.Service;
@@ -37,12 +38,11 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     private final CategoryMapper categoryMapper;
-    // TODO Etapa 06: private final CategoryRepository categoryRepository;
-    private final List<Category> categoriesInMemory;
+    private final CategoryRepository categoryRepository;
 
-    public CategoryService() {
+    public CategoryService(CategoryRepository categoryRepository) {
         this.categoryMapper = new CategoryMapper();
-        this.categoriesInMemory = new ArrayList<>();
+        this.categoryRepository = categoryRepository;
     }
 
     /**
@@ -54,33 +54,27 @@ public class CategoryService {
      */
     @Transactional
     public CategoryDTO createCategory(CategoryDTO categoryDTO) {
-        // Validaciones
         ValidationUtils.validateNotBlank(categoryDTO.getName(), "name");
 
-        // Generar slug si no existe
         String slug = categoryDTO.getSlug();
         if (slug == null || slug.isBlank()) {
             slug = StringUtils.slugify(categoryDTO.getName());
         }
 
-        // Verificar slug único
         if (existsBySlug(slug)) {
             throw new DuplicateEntityException("Category", "slug", slug);
         }
 
-        // Crear categoría
         Category category = categoryMapper.toEntity(categoryDTO);
-        category.setCategoryId(generateNextId());
         category.setSlug(slug);
 
-        // Asignar parent si existe
         if (categoryDTO.getParentId() != null) {
             Category parent = findCategoryEntityOrThrow(categoryDTO.getParentId());
             category.setParent(parent);
+            parent.getSubcategories().add(category);
         }
 
-        // TODO Etapa 06: categoryRepository.save(category);
-        categoriesInMemory.add(category);
+        category = categoryRepository.save(category);
 
         return categoryMapper.toDTO(category);
     }
@@ -98,45 +92,48 @@ public class CategoryService {
     @Transactional
     public CategoryDTO updateCategory(Long categoryId, CategoryDTO categoryDTO) {
         Category category = findCategoryEntityOrThrow(categoryId);
+        Category currentParent = category.getParent();
 
-        // Validaciones
         ValidationUtils.validateNotBlank(categoryDTO.getName(), "name");
 
-        // Generar slug si cambió el nombre
         String newSlug = categoryDTO.getSlug();
         if (newSlug == null || newSlug.isBlank()) {
             newSlug = StringUtils.slugify(categoryDTO.getName());
         }
 
-        // Verificar slug único si cambió
         if (!category.getSlug().equals(newSlug) && existsBySlug(newSlug)) {
             throw new DuplicateEntityException("Category", "slug", newSlug);
         }
 
-        // Actualizar campos
         category.setName(categoryDTO.getName());
         category.setSlug(newSlug);
 
-        // Actualizar parent si cambió
         if (categoryDTO.getParentId() != null) {
-            // Validar que no sea su propio padre
             if (categoryDTO.getParentId().equals(categoryId)) {
                 throw new ValidationException("Category cannot be its own parent");
             }
 
             Category newParent = findCategoryEntityOrThrow(categoryDTO.getParentId());
 
-            // Validar que no cree ciclo
             if (wouldCreateCycle(category, newParent)) {
                 throw new ValidationException("Cannot create cycle in category hierarchy");
             }
 
+            if (currentParent != null && !currentParent.equals(newParent)) {
+                currentParent.getSubcategories().remove(category);
+            }
+            if (!newParent.getSubcategories().contains(category)) {
+                newParent.getSubcategories().add(category);
+            }
             category.setParent(newParent);
         } else {
-            category.setParent(null); // Convertir en raíz
+            if (currentParent != null) {
+                currentParent.getSubcategories().remove(category);
+            }
+            category.setParent(null);
         }
 
-        // TODO Etapa 06: categoryRepository.save(category);
+        category = categoryRepository.save(category);
 
         return categoryMapper.toDTO(category);
     }
@@ -162,8 +159,11 @@ public class CategoryService {
             throw new ValidationException("Cannot delete category with products");
         }
 
-        // TODO Etapa 06: categoryRepository.delete(category);
-        categoriesInMemory.remove(category);
+        if (category.getParent() != null) {
+            category.getParent().getSubcategories().remove(category);
+        }
+
+        categoryRepository.delete(category);
     }
 
     /**
@@ -186,10 +186,7 @@ public class CategoryService {
      * @throws EntityNotFoundException si no existe
      */
     public CategoryDTO findBySlug(String slug) {
-        // TODO Etapa 06: Category category = categoryRepository.findBySlug(slug)
-        Category category = categoriesInMemory.stream()
-                .filter(c -> c.getSlug().equalsIgnoreCase(slug))
-                .findFirst()
+        Category category = categoryRepository.findBySlugIgnoreCase(slug)
                 .orElseThrow(() -> new EntityNotFoundException("Category with slug: " + slug));
 
         return categoryMapper.toDTO(category);
@@ -201,8 +198,7 @@ public class CategoryService {
      * @return Lista de CategoryDTO
      */
     public List<CategoryDTO> findAllCategories() {
-        // TODO Etapa 06: List<Category> categories = categoryRepository.findAll();
-        return categoryMapper.toDTOList(categoriesInMemory);
+        return categoryMapper.toDTOList(categoryRepository.findAll());
     }
 
     /**
@@ -211,12 +207,7 @@ public class CategoryService {
      * @return Lista de CategoryDTO
      */
     public List<CategoryDTO> findRootCategories() {
-        // TODO Etapa 06: List<Category> roots = categoryRepository.findByParentIsNull();
-        List<Category> rootCategories = categoriesInMemory.stream()
-                .filter(Category::isRootCategory)
-                .collect(Collectors.toList());
-
-        return categoryMapper.toDTOList(rootCategories);
+        return categoryMapper.toDTOList(categoryRepository.findByParentIsNull());
     }
 
     /**
@@ -226,15 +217,8 @@ public class CategoryService {
      * @return Lista de CategoryDTO
      */
     public List<CategoryDTO> findSubcategories(Long parentId) {
-        Category parent = findCategoryEntityOrThrow(parentId);
-
-        // TODO Etapa 06: List<Category> subs = categoryRepository.findByParentId(parentId);
-        List<Category> subcategories = categoriesInMemory.stream()
-                .filter(c -> c.getParent() != null &&
-                           c.getParent().getCategoryId().equals(parentId))
-                .collect(Collectors.toList());
-
-        return categoryMapper.toDTOList(subcategories);
+        findCategoryEntityOrThrow(parentId);
+        return categoryMapper.toDTOList(categoryRepository.findByParent_CategoryId(parentId));
     }
 
     /**
@@ -265,15 +249,13 @@ public class CategoryService {
 
         // Crear subcategoría
         Category subcategory = categoryMapper.toEntity(subcategoryDTO);
-        subcategory.setCategoryId(generateNextId());
         subcategory.setSlug(slug);
 
         // Gestión bidireccional
         parent.getSubcategories().add(subcategory);  // Agregar a colección
         subcategory.setParent(parent);                // Establecer referencia
 
-        // TODO Etapa 06: categoryRepository.save(subcategory);
-        categoriesInMemory.add(subcategory);
+        subcategory = categoryRepository.save(subcategory);
 
         return categoryMapper.toDTO(subcategory);
     }
@@ -321,8 +303,9 @@ public class CategoryService {
      *
      * @return Lista de CategoryDTO con jerarquías completas
      */
+    //Revisar
     public List<CategoryDTO> buildFullCategoryTree() {
-        List<Category> rootCategories = categoriesInMemory.stream()
+        List<Category> rootCategories = categoryRepository.findAll().stream()
                 .filter(Category::isRootCategory)
                 .collect(Collectors.toList());
 
@@ -336,9 +319,7 @@ public class CategoryService {
      * @return true si existe
      */
     public boolean existsBySlug(String slug) {
-        // TODO Etapa 06: return categoryRepository.existsBySlug(slug);
-        return categoriesInMemory.stream()
-                .anyMatch(c -> c.getSlug().equalsIgnoreCase(slug));
+        return categoryRepository.existsBySlugIgnoreCase(slug);
     }
 
     /**
@@ -350,10 +331,7 @@ public class CategoryService {
      * @throws EntityNotFoundException si no existe
      */
     public Category findCategoryEntityOrThrow(Long categoryId) {
-        // TODO Etapa 06: return categoryRepository.findById(categoryId)
-        return categoriesInMemory.stream()
-                .filter(c -> c.getCategoryId().equals(categoryId))
-                .findFirst()
+        return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new EntityNotFoundException("Category", categoryId));
     }
 
@@ -374,8 +352,9 @@ public class CategoryService {
     }
 
     // Método auxiliar para simular auto-increment
+    //Revisar
     private Long generateNextId() {
-        return categoriesInMemory.stream()
+        return categoryRepository.findAll().stream()
                 .mapToLong(Category::getCategoryId)
                 .max()
                 .orElse(0L) + 1;
