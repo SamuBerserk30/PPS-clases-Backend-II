@@ -8,10 +8,9 @@ import co.edu.cesde.pps.exception.InsufficientStockException;
 import co.edu.cesde.pps.exception.InvalidCartStateException;
 import co.edu.cesde.pps.exception.ValidationException;
 import co.edu.cesde.pps.mapper.CartMapper;
-import co.edu.cesde.pps.model.Cart;
-import co.edu.cesde.pps.model.CartItem;
-import co.edu.cesde.pps.model.Product;
-import co.edu.cesde.pps.model.User;
+import co.edu.cesde.pps.model.*;
+import co.edu.cesde.pps.repository.CartRepository;
+import co.edu.cesde.pps.repository.UserSessionRepository;
 import co.edu.cesde.pps.util.CalculationUtils;
 import co.edu.cesde.pps.util.ValidationUtils;
 import org.springframework.stereotype.Service;
@@ -49,14 +48,16 @@ public class CartService {
     private final CartMapper cartMapper;
     private final UserService userService;
     private final ProductService productService;
-    // TODO Etapa 06: private final CartRepository cartRepository;
-    private final List<Cart> cartsInMemory;
+    private final CartRepository cartRepository;
+    private final UserSessionRepository userSessionRepository;
 
-    public CartService(UserService userService, ProductService productService) {
+    public CartService(UserService userService, ProductService productService,
+                       CartRepository cartRepository, UserSessionRepository userSessionRepository) {
         this.cartMapper = new CartMapper();
         this.userService = userService;
         this.productService = productService;
-        this.cartsInMemory = new ArrayList<>();
+        this.cartRepository = cartRepository;
+        this.userSessionRepository = userSessionRepository;
     }
 
     /**
@@ -67,15 +68,15 @@ public class CartService {
      */
     @Transactional
     public CartDTO createCartForGuest(Long sessionId) {
-        Cart cart = new Cart();
-        cart.setCartId(generateNextId());
-        cart.setUser(null); // Invitado
-        cart.setStatus(CartStatus.OPEN);
-        cart.setCreatedAt(LocalDateTime.now());
-        cart.setUpdatedAt(LocalDateTime.now());
+        Cart cart = Cart.builder()
+                .user(null)
+                .session(resolveSession(sessionId))
+                .status(CartStatus.OPEN)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
 
-        // TODO Etapa 06: cartRepository.save(cart);
-        cartsInMemory.add(cart);
+        cart = cartRepository.save(cart);
 
         return cartMapper.toDTO(cart);
     }
@@ -91,15 +92,14 @@ public class CartService {
     public CartDTO createCartForUser(Long userId) {
         User user = userService.findUserEntityOrThrow(userId);
 
-        Cart cart = new Cart();
-        cart.setCartId(generateNextId());
-        cart.setUser(user);
-        cart.setStatus(CartStatus.OPEN);
-        cart.setCreatedAt(LocalDateTime.now());
-        cart.setUpdatedAt(LocalDateTime.now());
+        Cart cart = Cart.builder()
+                .user(user)
+                .status(CartStatus.OPEN)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
 
-        // TODO Etapa 06: cartRepository.save(cart);
-        cartsInMemory.add(cart);
+        cart = cartRepository.save(cart);
 
         return cartMapper.toDTO(cart);
     }
@@ -123,12 +123,7 @@ public class CartService {
      * @return CartDTO o null si no existe
      */
     public CartDTO findOpenCartByUser(Long userId) {
-        // TODO Etapa 06: Optional<Cart> cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.OPEN);
-        Cart cart = cartsInMemory.stream()
-                .filter(c -> c.getUser() != null &&
-                           c.getUser().getUserId().equals(userId) &&
-                           c.getStatus() == CartStatus.OPEN)
-                .findFirst()
+        Cart cart = cartRepository.findByUser_UserIdAndStatus(userId, CartStatus.OPEN)
                 .orElse(null);
 
         return cart != null ? cartMapper.toDTO(cart) : null;
@@ -148,49 +143,40 @@ public class CartService {
      */
     @Transactional
     public CartDTO addItem(Long cartId, Long productId, Integer quantity) {
-        // Validar cantidad
         ValidationUtils.validatePositive(quantity, "quantity");
 
-        // Obtener carrito y validar estado
         Cart cart = findCartEntityOrThrow(cartId);
         if (cart.getStatus() != CartStatus.OPEN) {
             throw new InvalidCartStateException(cartId, cart.getStatus(),
-                CartStatus.OPEN, "add item");
+                    CartStatus.OPEN, "add item");
         }
 
-        // Obtener producto y validar disponibilidad
         Product product = productService.findProductEntityOrThrow(productId);
-        if (!product.getIsActive()) {
+        if (!Boolean.TRUE.equals(product.getIsActive())) {
             throw new ValidationException("Product '" + product.getName() + "' is not active");
         }
 
-        // Validar stock disponible
         if (!CalculationUtils.hasEnoughStock(product.getStockQty(), quantity)) {
             throw new InsufficientStockException(productId, product.getSku(),
-                quantity, product.getStockQty());
+                    quantity, product.getStockQty());
         }
 
-        // Buscar si el producto ya existe en el carrito
         CartItem existingItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getProductId().equals(productId))
                 .findFirst()
                 .orElse(null);
 
         if (existingItem != null) {
-            // Producto ya existe: actualizar cantidad
             int newQuantity = existingItem.getQuantity() + quantity;
 
-            // Validar stock para nueva cantidad
             if (!CalculationUtils.hasEnoughStock(product.getStockQty(), newQuantity)) {
                 throw new InsufficientStockException(productId, product.getSku(),
-                    newQuantity, product.getStockQty());
+                        newQuantity, product.getStockQty());
             }
 
             existingItem.setQuantity(newQuantity);
         } else {
-            // Producto nuevo: crear CartItem y gestión bidireccional
             CartItem newItem = CartItem.builder()
-                    .cartItemId(generateNextCartItemId())
                     .cart(cart)
                     .product(product)
                     .quantity(quantity)
@@ -198,14 +184,12 @@ public class CartService {
                     .addedAt(LocalDateTime.now())
                     .build();
 
-            cart.getItems().add(newItem);      // Agregar a colección del carrito
-            newItem.setCart(cart);             // Establecer referencia al carrito
+            cart.getItems().add(newItem);
+            newItem.setCart(cart);
         }
 
-        // Actualizar timestamp del carrito
         touchCart(cart);
-
-        // TODO Etapa 06: cartRepository.save(cart);
+        cart = cartRepository.save(cart);
 
         return cartMapper.toDTO(cart);
     }
@@ -357,17 +341,17 @@ public class CartService {
         // 2. Validar estados
         if (guestCart.getStatus() != CartStatus.OPEN) {
             throw new InvalidCartStateException(guestCartId, guestCart.getStatus(),
-                CartStatus.OPEN, "merge");
+                    CartStatus.OPEN, "merge");
         }
         if (userCart.getStatus() != CartStatus.OPEN) {
             throw new InvalidCartStateException(userCart.getCartId(),
-                userCart.getStatus(), CartStatus.OPEN, "merge");
+                    userCart.getStatus(), CartStatus.OPEN, "merge");
         }
 
         // 3. Validar que guestCart sea realmente de invitado
         if (guestCart.getUser() != null) {
             throw new CartMergeException(guestCartId, userCart.getCartId(),
-                "Guest cart already has a user assigned");
+                    "Guest cart already has a user assigned");
         }
 
         // 4. Fusionar items del carrito invitado al carrito usuario
@@ -377,8 +361,7 @@ public class CartService {
 
             // Buscar si el producto ya existe en carrito de usuario
             CartItem userItem = userCart.getItems().stream()
-                    .filter(item -> item.getProduct().getProductId()
-                        .equals(product.getProductId()))
+                    .filter(item -> item.getProduct().getProductId().equals(product.getProductId()))
                     .findFirst()
                     .orElse(null);
 
@@ -389,7 +372,7 @@ public class CartService {
                 // Validar stock para cantidad fusionada
                 if (!CalculationUtils.hasEnoughStock(product.getStockQty(), totalQuantity)) {
                     throw new InsufficientStockException(product.getProductId(),
-                        product.getSku(), totalQuantity, product.getStockQty());
+                            product.getSku(), totalQuantity, product.getStockQty());
                 }
 
                 userItem.setQuantity(totalQuantity);
@@ -403,7 +386,7 @@ public class CartService {
                 // Validar stock disponible
                 if (!CalculationUtils.hasEnoughStock(product.getStockQty(), guestQuantity)) {
                     throw new InsufficientStockException(product.getProductId(),
-                        product.getSku(), guestQuantity, product.getStockQty());
+                            product.getSku(), guestQuantity, product.getStockQty());
                 }
 
                 // Crear nuevo item en carrito de usuario
@@ -412,10 +395,10 @@ public class CartService {
                         .cart(userCart)
                         .product(product)
                         .quantity(guestQuantity)
-                        .unitPrice(product.getPrice())
-                        .addedAt(LocalDateTime.now())
+                        .unitPrice(guestItem.getUnitPrice())
+                        .addedAt(guestItem.getAddedAt())
                         .build();
-                // Gestión bidireccional
+
                 userCart.getItems().add(newItem);
                 newItem.setCart(userCart);
             }
@@ -428,8 +411,8 @@ public class CartService {
         // 6. Actualizar carrito de usuario
         touchCart(userCart);
 
-        // TODO Etapa 06: cartRepository.save(guestCart);
-        // TODO Etapa 06: cartRepository.save(userCart);
+        cartRepository.save(guestCart);
+        userCart = cartRepository.save(userCart);
 
         return cartMapper.toDTO(userCart);
     }
@@ -465,13 +448,9 @@ public class CartService {
      * @throws EntityNotFoundException si no existe
      */
     public Cart findCartEntityOrThrow(Long cartId) {
-        // TODO Etapa 06: return cartRepository.findById(cartId)
-        return cartsInMemory.stream()
-                .filter(c -> c.getCartId().equals(cartId))
-                .findFirst()
+        return cartRepository.findById(cartId)
                 .orElseThrow(() -> new EntityNotFoundException("Cart", cartId));
     }
-
     // Métodos privados auxiliares
 
     /**
@@ -480,27 +459,13 @@ public class CartService {
     private Cart findOrCreateOpenCartForUser(Long userId) {
         User user = userService.findUserEntityOrThrow(userId);
 
-        // Buscar carrito OPEN existente
-        Cart cart = cartsInMemory.stream()
-                .filter(c -> c.getUser() != null &&
-                           c.getUser().getUserId().equals(userId) &&
-                           c.getStatus() == CartStatus.OPEN)
-                .findFirst()
-                .orElse(null);
-
-        if (cart == null) {
-            // Crear nuevo carrito
-            cart = new Cart();
-            cart.setCartId(generateNextId());
-            cart.setUser(user);
-            cart.setStatus(CartStatus.OPEN);
-            cart.setCreatedAt(LocalDateTime.now());
-            cart.setUpdatedAt(LocalDateTime.now());
-
-            cartsInMemory.add(cart);
-        }
-
-        return cart;
+        return cartRepository.findByUser_UserIdAndStatus(userId, CartStatus.OPEN)
+                .orElseGet(() -> cartRepository.save(Cart.builder()
+                        .user(user)
+                        .status(CartStatus.OPEN)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build()));
     }
 
     /**
@@ -510,16 +475,25 @@ public class CartService {
         cart.setUpdatedAt(LocalDateTime.now());
     }
 
+    private UserSession resolveSession(Long sessionId) {
+        if (sessionId == null) {
+            return null;
+        }
+
+        return userSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new EntityNotFoundException("UserSession", sessionId));
+    }
+
     // Métodos auxiliares para simular auto-increment
     private Long generateNextId() {
-        return cartsInMemory.stream()
+        return cartRepository.findAll().stream()
                 .mapToLong(Cart::getCartId)
                 .max()
                 .orElse(0L) + 1;
     }
 
     private Long generateNextCartItemId() {
-        return cartsInMemory.stream()
+        return cartRepository.findAll().stream()
                 .flatMap(cart -> cart.getItems().stream())
                 .mapToLong(CartItem::getCartItemId)
                 .max()
