@@ -9,6 +9,7 @@ import co.edu.cesde.pps.model.Category;
 import co.edu.cesde.pps.model.Product;
 import co.edu.cesde.pps.util.CalculationUtils;
 import co.edu.cesde.pps.util.ValidationUtils;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
  * - Inyección de ProductRepository
  * - Persistencia real
  */
+@Service
 public class ProductService {
 
     private final ProductMapper productMapper;
