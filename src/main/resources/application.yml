@@ -3,8 +3,8 @@ spring:
     name: product-purchasing-system
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:pps_db}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: ${DB_USER:root}
-    password: ${DB_PASSWORD:}
+    username: ${DB_USER:samuel}
+    password: ${DB_PASSWORD:samuel}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
