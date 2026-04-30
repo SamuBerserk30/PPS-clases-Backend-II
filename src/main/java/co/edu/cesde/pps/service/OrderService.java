@@ -8,8 +8,12 @@ import co.edu.cesde.pps.exception.InvalidCartStateException;
 import co.edu.cesde.pps.exception.ValidationException;
 import co.edu.cesde.pps.mapper.OrderMapper;
 import co.edu.cesde.pps.model.*;
+import co.edu.cesde.pps.repository.OrderRepository;
+import co.edu.cesde.pps.repository.OrderStatusRepository;
 import co.edu.cesde.pps.util.CalculationUtils;
 import co.edu.cesde.pps.config.AppConfig;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -38,6 +42,8 @@ import java.util.stream.Collectors;
  * - Inyección de OrderRepository
  * - Persistencia real
  */
+@Service
+@Transactional(readOnly = true)
 public class OrderService {
 
     private final OrderMapper orderMapper;
@@ -45,18 +51,20 @@ public class OrderService {
     private final CartService cartService;
     private final AddressService addressService;
     private final ProductService productService;
-    // TODO Etapa 06: private final OrderRepository orderRepository;
-    private final List<Order> ordersInMemory;
+    private final OrderRepository orderRepository;
+    private final OrderStatusRepository orderStatusRepository;
     private final Random random;
 
     public OrderService(UserService userService, CartService cartService,
-                       AddressService addressService, ProductService productService) {
+                        AddressService addressService, ProductService productService,
+                        OrderRepository orderRepository, OrderStatusRepository orderStatusRepository) {
         this.orderMapper = new OrderMapper();
         this.userService = userService;
         this.cartService = cartService;
         this.addressService = addressService;
         this.productService = productService;
-        this.ordersInMemory = new ArrayList<>();
+        this.orderRepository = orderRepository;
+        this.orderStatusRepository = orderStatusRepository;
         this.random = new Random();
     }
 
@@ -86,18 +94,16 @@ public class OrderService {
      * @throws ValidationException si el carrito está vacío o no pertenece al usuario
      * @throws InsufficientStockException si no hay stock suficiente
      */
+    @Transactional
     public OrderDTO checkout(Long userId, Long cartId, Long shippingAddressId,
-                            Long billingAddressId) {
-        // 1. Validar usuario está registrado
-        userService.findUserEntityOrThrow(userId);
-
-        // 2. Obtener y validar carrito
+                             Long billingAddressId) {
+        User user = userService.findUserEntityOrThrow(userId);
         Cart cart = cartService.findCartEntityOrThrow(cartId);
 
         // Validar estado OPEN
         if (cart.getStatus() != CartStatus.OPEN) {
             throw new InvalidCartStateException(cartId, cart.getStatus(),
-                CartStatus.OPEN, "checkout");
+                    CartStatus.OPEN, "checkout");
         }
 
         // Validar no vacío
@@ -126,48 +132,50 @@ public class OrderService {
         for (CartItem item : cart.getItems()) {
             Product product = item.getProduct();
 
-            // Verificar que el producto esté activo
-            if (!product.getIsActive()) {
+            if (!Boolean.TRUE.equals(product.getIsActive())) {
                 throw new ValidationException("Product '" + product.getName() +
-                    "' is no longer available");
+                        "' is no longer available");
             }
 
             // Verificar stock suficiente
             if (!CalculationUtils.hasEnoughStock(product.getStockQty(), item.getQuantity())) {
                 throw new InsufficientStockException(product.getProductId(),
-                    product.getSku(), item.getQuantity(), product.getStockQty());
+                        product.getSku(), item.getQuantity(), product.getStockQty());
             }
         }
 
         // 5. Crear orden con número único
         String orderNumber = generateOrderNumber();
+
+        OrderStatus pendingStatus = orderStatusRepository.findByNameIgnoreCase("PENDING")
+                .orElseThrow(() -> new EntityNotFoundException("OrderStatus", "PENDING"));
+
         Order order = Order.builder()
-                .orderId(generateNextId())
                 .orderNumber(orderNumber)
-                .user(cart.getUser())
+                .user(user)
+                .orderStatus(pendingStatus)
                 .shippingAddress(shippingAddress)
                 .billingAddress(billingAddress)
+                .subtotal(BigDecimal.ZERO)
+                .tax(BigDecimal.ZERO)
+                .shippingCost(BigDecimal.ZERO)
+                .total(BigDecimal.ZERO)
                 .createdAt(LocalDateTime.now())
-                .items(new ArrayList<>())
                 .build();
 
         // 6. Copiar items del carrito a la orden (congelar precios históricos)
         for (CartItem cartItem : cart.getItems()) {
+            BigDecimal lineTotal = CalculationUtils.calculateOrderItemLineTotal(
+                    cartItem.getUnitPrice(), cartItem.getQuantity());
+
             OrderItem orderItem = OrderItem.builder()
-                    .orderItemId(generateNextOrderItemId())
                     .order(order)
                     .product(cartItem.getProduct())
                     .quantity(cartItem.getQuantity())
                     .unitPrice(cartItem.getUnitPrice())
-                    .lineTotal(BigDecimal.ZERO) // Se calculará después
+                    .lineTotal(lineTotal)
                     .build();
-            orderItem.setOrderItemId(generateNextOrderItemId());
 
-            // Calcular lineTotal
-            orderItem.setLineTotal(CalculationUtils.calculateOrderItemLineTotal(
-                cartItem.getUnitPrice(), cartItem.getQuantity()));
-
-            // Gestión bidireccional
             order.getItems().add(orderItem);
             orderItem.setOrder(order);
         }
@@ -175,7 +183,7 @@ public class OrderService {
         // 7. Calcular totales
         List<BigDecimal> lineTotals = order.getItems().stream()
                 .map(OrderItem::getLineTotal)
-                .collect(Collectors.toList());
+                .toList();
 
         BigDecimal subtotal = CalculationUtils.calculateOrderSubtotal(lineTotals);
         BigDecimal taxRate = BigDecimal.valueOf(AppConfig.getDefaultTaxRate());
@@ -191,16 +199,14 @@ public class OrderService {
         // 8. Actualizar stock de productos
         for (CartItem item : cart.getItems()) {
             productService.decreaseStock(item.getProduct().getProductId(),
-                item.getQuantity());
+                    item.getQuantity());
         }
 
         // 9. Marcar carrito como CONVERTED
         cart.setStatus(CartStatus.CONVERTED);
         cart.setUpdatedAt(LocalDateTime.now());
 
-        // TODO Etapa 06: orderRepository.save(order);
-        // TODO Etapa 06: cartRepository.save(cart);
-        ordersInMemory.add(order);
+        order = orderRepository.save(order);
 
         return orderMapper.toDTO(order);
     }
@@ -225,10 +231,7 @@ public class OrderService {
      * @throws EntityNotFoundException si no existe
      */
     public OrderDTO findByOrderNumber(String orderNumber) {
-        // TODO Etapa 06: Order order = orderRepository.findByOrderNumber(orderNumber)
-        Order order = ordersInMemory.stream()
-                .filter(o -> o.getOrderNumber().equalsIgnoreCase(orderNumber))
-                .findFirst()
+        Order order = orderRepository.findByOrderNumberIgnoreCase(orderNumber)
                 .orElseThrow(() -> new EntityNotFoundException("Order with number: " + orderNumber));
 
         return orderMapper.toDTO(order);
@@ -241,14 +244,8 @@ public class OrderService {
      * @return Lista de OrderDTO
      */
     public List<OrderDTO> findOrdersByUser(Long userId) {
-        userService.findUserEntityOrThrow(userId); // Validar que existe
-
-        // TODO Etapa 06: List<Order> orders = orderRepository.findByUserId(userId);
-        List<Order> userOrders = ordersInMemory.stream()
-                .filter(o -> o.getUser().equals(userId))
-                .collect(Collectors.toList());
-
-        return orderMapper.toDTOList(userOrders);
+        userService.findUserEntityOrThrow(userId);
+        return orderMapper.toDTOList(orderRepository.findByUser_UserId(userId));
     }
 
     /**
@@ -258,12 +255,7 @@ public class OrderService {
      * @return Lista de OrderDTO
      */
     public List<OrderDTO> findOrdersByStatus(Long statusId) {
-        // TODO Etapa 06: List<Order> orders = orderRepository.findByOrderStatusId(statusId);
-        List<Order> statusOrders = ordersInMemory.stream()
-                .filter(o -> o.getOrderStatus().equals(statusId))
-                .collect(Collectors.toList());
-
-        return orderMapper.toDTOList(statusOrders);
+        return orderMapper.toDTOList(orderRepository.findByOrderStatus_OrderStatusId(statusId));
     }
 
     /**
@@ -274,13 +266,7 @@ public class OrderService {
      * @return Lista de OrderDTO
      */
     public List<OrderDTO> findOrdersByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-        // TODO Etapa 06: List<Order> orders = orderRepository.findByCreatedAtBetween(start, end);
-        List<Order> rangeOrders = ordersInMemory.stream()
-                .filter(o -> o.getCreatedAt().isAfter(startDate) &&
-                           o.getCreatedAt().isBefore(endDate))
-                .collect(Collectors.toList());
-
-        return orderMapper.toDTOList(rangeOrders);
+        return orderMapper.toDTOList(orderRepository.findByCreatedAtBetween(startDate, endDate));
     }
 
     /**
@@ -292,12 +278,16 @@ public class OrderService {
      * @return Número de orden único
      */
     public String generateOrderNumber() {
-        String prefix = AppConfig.getOrderNumberPrefix(); // "ORD-"
-        String date = LocalDateTime.now().format(
-            DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String randomPart = String.format("%06d", random.nextInt(1000000));
+        String prefix = AppConfig.getOrderNumberPrefix();
+        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-        return prefix + date + "-" + randomPart;
+        String orderNumber;
+        do {
+            String randomPart = String.format("%06d", random.nextInt(1000000));
+            orderNumber = prefix + date + "-" + randomPart;
+        } while (orderRepository.existsByOrderNumberIgnoreCase(orderNumber));
+
+        return orderNumber;
     }
 
     /**
@@ -323,23 +313,20 @@ public class OrderService {
      * @throws EntityNotFoundException si no existe
      */
     public Order findOrderEntityOrThrow(Long orderId) {
-        // TODO Etapa 06: return orderRepository.findById(orderId)
-        return ordersInMemory.stream()
-                .filter(o -> o.getOrderId().equals(orderId))
-                .findFirst()
+        return orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
     }
 
     // Métodos auxiliares para simular auto-increment
     private Long generateNextId() {
-        return ordersInMemory.stream()
+        return orderRepository.findAll().stream()
                 .mapToLong(Order::getOrderId)
                 .max()
                 .orElse(0L) + 1;
     }
 
     private Long generateNextOrderItemId() {
-        return ordersInMemory.stream()
+        return orderRepository.findAll().stream()
                 .flatMap(order -> order.getItems().stream())
                 .mapToLong(OrderItem::getOrderItemId)
                 .max()
