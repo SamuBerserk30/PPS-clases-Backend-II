@@ -234,6 +234,23 @@ public class AddressService {
         addresses.forEach(a -> a.setIsDefault(false));
     }
 
+    public AddressDTO findUserAddressById(Long userId, Long addressId) {
+        Address address = findAddressEntityOrThrow(addressId);
+        if (!address.getUser().getUserId().equals(userId)) {
+            throw new ValidationException("Address does not belong to user");
+        }
+        return addressMapper.toDTO(address);
+    }
+
+    @Transactional
+    public AddressDTO updateUserAddress(Long userId, Long addressId, AddressDTO addressDTO) {
+        Address address = findAddressEntityOrThrow(addressId);
+        if (!address.getUser().getUserId().equals(userId)) {
+            throw new ValidationException("Address does not belong to user");
+        }
+        return updateAddress(addressId, addressDTO);
+    }
+
     // Método auxiliar para simular auto-increment en memoria
     //revisar
     private Long generateNextId() {

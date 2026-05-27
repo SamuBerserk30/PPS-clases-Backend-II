@@ -336,7 +336,16 @@ public class CartService {
     public CartDTO mergeGuestCartToUserCart(Long guestCartId, Long userId) {
         // 1. Obtener ambos carritos
         Cart guestCart = findCartEntityOrThrow(guestCartId);
-        Cart userCart = findOrCreateOpenCartForUser(userId);
+        Cart userCart = findCartEntityOrThrow(
+                cartRepository.findByUser_UserIdAndStatus(userId, CartStatus.OPEN)
+                        .orElseGet(() -> cartRepository.save(Cart.builder()
+                                .user(userService.findUserEntityOrThrow(userId))
+                                .status(CartStatus.OPEN)
+                                .createdAt(LocalDateTime.now())
+                                .updatedAt(LocalDateTime.now())
+                                .build()))
+                        .getCartId()
+        );
 
         // 2. Validar estados
         if (guestCart.getStatus() != CartStatus.OPEN) {
@@ -453,19 +462,28 @@ public class CartService {
     }
     // Métodos privados auxiliares
 
+    @Transactional
+    public CartDTO findOrCreateOpenCartForGuestSession(Long sessionId) {
+        return cartRepository.findBySession_SessionIdAndStatus(sessionId, CartStatus.OPEN)
+                .map(cartMapper::toDTO)
+                .orElseGet(() -> createCartForGuest(sessionId));
+    }
+
     /**
      * Busca carrito OPEN del usuario o crea uno nuevo si no existe.
      */
-    private Cart findOrCreateOpenCartForUser(Long userId) {
+    public CartDTO findOrCreateOpenCartForUser(Long userId) {
         User user = userService.findUserEntityOrThrow(userId);
 
-        return cartRepository.findByUser_UserIdAndStatus(userId, CartStatus.OPEN)
+        Cart cart = cartRepository.findByUser_UserIdAndStatus(userId, CartStatus.OPEN)
                 .orElseGet(() -> cartRepository.save(Cart.builder()
                         .user(user)
                         .status(CartStatus.OPEN)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
                         .build()));
+
+        return cartMapper.toDTO(cart);
     }
 
     /**
@@ -483,6 +501,7 @@ public class CartService {
         return userSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("UserSession", sessionId));
     }
+
 
     // Métodos auxiliares para simular auto-increment
     private Long generateNextId() {

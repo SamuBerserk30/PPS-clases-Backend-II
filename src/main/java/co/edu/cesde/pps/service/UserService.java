@@ -44,10 +44,10 @@ public class UserService {
     // TODO Etapa 06: private final UserRepository userRepository;
     // Por ahora trabajamos con lista en memoria
 
-    public UserService() {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository) {
         this.userMapper = new UserMapper();
-        this.userRepository = null;
-        this.roleRepository = null;
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
     }
 
     /**
@@ -217,6 +217,71 @@ public class UserService {
         //     .orElseThrow(() -> new EntityNotFoundException("User", userId));
         return userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User", userId));
+    }
+
+    public User findUserEntityByEmailOrThrow(String email) {
+        return userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new EntityNotFoundException("User with email: " + email));
+    }
+
+    @Transactional
+    public void updatePasswordHash(Long userId, String newPasswordHash) {
+        User user = findUserEntityOrThrow(userId);
+        user.setPasswordHash(newPasswordHash);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public UserDTO createAdminUser(String email, String passwordHash, String firstName,
+                                   String lastName, String phone, String roleName, UserStatus status) {
+        ValidationUtils.validateEmail(email, "email");
+        ValidationUtils.validateNotBlank(passwordHash, "passwordHash");
+        ValidationUtils.validateNotBlank(firstName, "firstName");
+        ValidationUtils.validateNotBlank(lastName, "lastName");
+
+        if (existsByEmail(email)) {
+            throw new DuplicateEntityException("User", "email", email);
+        }
+
+        Role role = roleRepository.findByNameIgnoreCase(roleName)
+                .orElseThrow(() -> new EntityNotFoundException("Role", roleName));
+
+        User user = User.builder()
+                .role(role)
+                .email(email.toLowerCase().trim())
+                .passwordHash(passwordHash)
+                .firstName(firstName.trim())
+                .lastName(lastName.trim())
+                .phone(phone != null ? phone.trim() : null)
+                .status(status)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        user = userRepository.save(user);
+        return userMapper.toDTO(user);
+    }
+
+    @Transactional
+    public UserDTO updateAdminUser(Long userId, String email, String firstName,
+                                   String lastName, String phone, String roleName, UserStatus status) {
+        User user = findUserEntityOrThrow(userId);
+
+        if (email != null && !email.isBlank()) {
+            ValidationUtils.validateEmail(email, "email");
+            user.setEmail(email.toLowerCase().trim());
+        }
+        if (firstName != null) user.setFirstName(firstName.trim());
+        if (lastName != null) user.setLastName(lastName.trim());
+        if (phone != null) user.setPhone(phone.isBlank() ? null : phone.trim());
+        if (status != null) user.setStatus(status);
+        if (roleName != null) {
+            Role role = roleRepository.findByNameIgnoreCase(roleName)
+                    .orElseThrow(() -> new EntityNotFoundException("Role", roleName));
+            user.setRole(role);
+        }
+
+        user = userRepository.save(user);
+        return userMapper.toDTO(user);
     }
 
     // Método auxiliar para simular auto-increment en memoria

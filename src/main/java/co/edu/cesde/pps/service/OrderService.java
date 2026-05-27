@@ -317,6 +317,14 @@ public class OrderService {
                 .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
     }
 
+    public OrderDTO findByIdForUser(Long userId, Long orderId) {
+        OrderDTO order = findById(orderId);
+        if (!order.getUserId().equals(userId)) {
+            throw new EntityNotFoundException("Order", orderId);
+        }
+        return order;
+    }
+
     // Métodos auxiliares para simular auto-increment
     private Long generateNextId() {
         return orderRepository.findAll().stream()
