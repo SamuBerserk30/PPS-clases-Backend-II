@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -464,9 +465,21 @@ public class CartService {
 
     @Transactional
     public CartDTO findOrCreateOpenCartForGuestSession(Long sessionId) {
-        return cartRepository.findBySession_SessionIdAndStatus(sessionId, CartStatus.OPEN)
-                .map(cartMapper::toDTO)
-                .orElseGet(() -> createCartForGuest(sessionId));
+        ValidationUtils.validateNotNull(sessionId, "sessionId");
+
+        Cart cart = cartRepository.findBySession_SessionIdAndStatus(sessionId, CartStatus.OPEN)
+                .orElseGet(() -> {
+                    UserSession session = resolveSession(sessionId);
+                    return cartRepository.save(Cart.builder()
+                            .user(null)
+                            .session(session)
+                            .status(CartStatus.OPEN)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build());
+                });
+
+        return cartMapper.toDTO(cart);
     }
 
     /**
@@ -475,13 +488,25 @@ public class CartService {
     public CartDTO findOrCreateOpenCartForUser(Long userId) {
         User user = userService.findUserEntityOrThrow(userId);
 
-        Cart cart = cartRepository.findByUser_UserIdAndStatus(userId, CartStatus.OPEN)
-                .orElseGet(() -> cartRepository.save(Cart.builder()
-                        .user(user)
-                        .status(CartStatus.OPEN)
-                        .createdAt(LocalDateTime.now())
-                        .updatedAt(LocalDateTime.now())
-                        .build()));
+        Optional<Cart> existingCart = cartRepository.findByUser_UserIdAndStatus(userId, CartStatus.OPEN);
+        if (existingCart.isPresent()) {
+            return cartMapper.toDTO(existingCart.get());
+        }
+
+        UserSession session = userSessionRepository.save(UserSession.builder()
+                .user(user)
+                .sessionToken(java.util.UUID.randomUUID().toString())
+                .createdAt(java.time.LocalDateTime.now())
+                .expiresAt(java.time.LocalDateTime.now().plusHours(24))
+                .build());
+
+        Cart cart = cartRepository.save(Cart.builder()
+                .user(user)
+                .session(session)
+                .status(CartStatus.OPEN)
+                .createdAt(java.time.LocalDateTime.now())
+                .updatedAt(java.time.LocalDateTime.now())
+                .build());
 
         return cartMapper.toDTO(cart);
     }

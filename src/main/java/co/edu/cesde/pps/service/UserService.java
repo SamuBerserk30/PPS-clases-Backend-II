@@ -86,7 +86,6 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("Role", "CUSTOMER"));
 
         User user = User.builder()
-                .userId(generateNextId())
                 .role(defaultRole)
                 .email(email.toLowerCase().trim())
                 .passwordHash(passwordHash)
