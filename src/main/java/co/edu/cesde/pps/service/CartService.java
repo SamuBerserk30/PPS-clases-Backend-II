@@ -526,12 +526,22 @@ public class CartService {
         User user = userService.findUserEntityOrThrow(userId);
 
         return cartRepository.findByUser_UserIdAndStatus(userId, CartStatus.OPEN)
-                .orElseGet(() -> cartRepository.save(Cart.builder()
-                        .user(user)
-                        .status(CartStatus.OPEN)
-                        .createdAt(LocalDateTime.now())
-                        .updatedAt(LocalDateTime.now())
-                        .build()));
+                .orElseGet(() -> {
+                    UserSession session = userSessionRepository.save(UserSession.builder()
+                            .user(user)
+                            .sessionToken(java.util.UUID.randomUUID().toString())
+                            .createdAt(LocalDateTime.now())
+                            .expiresAt(LocalDateTime.now().plusHours(24))
+                            .build());
+
+                    return cartRepository.save(Cart.builder()
+                            .user(user)
+                            .session(session)
+                            .status(CartStatus.OPEN)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build());
+                });
     }
 
     /**

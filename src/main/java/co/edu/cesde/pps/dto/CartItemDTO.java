@@ -28,6 +28,8 @@ public class CartItemDTO {
     private LocalDateTime addedAt;
     private Boolean productAvailable;
     private Integer productStock;
+    private String productImage;
+    private String productCategoryName;
 
     // Constructor vacío
     public CartItemDTO() {
@@ -36,7 +38,7 @@ public class CartItemDTO {
     // Constructor completo
     public CartItemDTO(Long cartItemId, Long cartId, Long productId, String productName,
                        String productSku, Integer quantity, BigDecimal unitPrice,
-                       BigDecimal subtotal, LocalDateTime addedAt) {
+                       BigDecimal subtotal, LocalDateTime addedAt, String productImage, String productCategoryName) {
         this.cartItemId = cartItemId;
         this.cartId = cartId;
         this.productId = productId;
@@ -46,6 +48,8 @@ public class CartItemDTO {
         this.unitPrice = unitPrice;
         this.subtotal = subtotal;
         this.addedAt = addedAt;
+        this.productImage = productImage;
+        this.productCategoryName = productCategoryName;
     }
 
     // Getters y Setters
@@ -97,6 +101,14 @@ public class CartItemDTO {
     public void setProductImageUrl(String productImageUrl) {
         this.productImageUrl = productImageUrl;
     }
+
+    public String getProductCategoryName() {return productCategoryName;}
+
+    public void setProductCategoryName(String productCategoryName) {this.productCategoryName = productCategoryName;}
+
+    public String getProductImage() {return productImage;}
+
+    public void setProductImage(String productImage) {this.productImage = productImage;}
 
     public Integer getQuantity() {
         return quantity;
