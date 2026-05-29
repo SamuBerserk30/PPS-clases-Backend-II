@@ -60,6 +60,9 @@ public class Product {
     @Column(name = "description", nullable = false, length = 1000)
     private String description;
 
+    @Column(name = "image", length = 1000)
+    private String image;
+
     @Column(name = "price", nullable = false, length = 50)
     private BigDecimal price;
 

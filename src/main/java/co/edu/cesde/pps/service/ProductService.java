@@ -10,13 +10,12 @@ import co.edu.cesde.pps.model.Product;
 import co.edu.cesde.pps.repository.ProductRepository;
 import co.edu.cesde.pps.util.CalculationUtils;
 import co.edu.cesde.pps.util.ValidationUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio para gestión de productos.
@@ -36,7 +35,7 @@ import java.util.stream.Collectors;
  * - Persistencia real
  */
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class ProductService {
 
     private final ProductMapper productMapper;
@@ -75,11 +74,11 @@ public class ProductService {
 
         // Crear producto
         Product product = productMapper.toEntity(productDTO);
-        product.setProductId(generateNextId());
         product.setCategory(category);
+        product.setImage(normalizeImage(productDTO.getImage()));
         product.setCreatedAt(LocalDateTime.now());
+        category.getProducts().add(product);
 
-        // TODO Etapa 06: productRepository.save(product);
         product = productRepository.save(product);
 
         return productMapper.toDTO(product);
@@ -112,18 +111,22 @@ public class ProductService {
         product.setSku(productDTO.getSku());
         product.setName(productDTO.getName());
         product.setDescription(productDTO.getDescription());
+        product.setImage(normalizeImage(productDTO.getImage()));
         product.setPrice(productDTO.getPrice());
         product.setStockQty(productDTO.getStockQty());
         product.setIsActive(productDTO.getIsActive());
 
         // Actualizar categoría si cambió
         if (productDTO.getCategoryId() != null &&
-            !productDTO.getCategoryId().equals(product.getCategory().getCategoryId())) {
+                !productDTO.getCategoryId().equals(product.getCategory().getCategoryId())) {
+            Category currentCategory = product.getCategory();
             Category newCategory = categoryService.findCategoryEntityOrThrow(productDTO.getCategoryId());
+            currentCategory.getProducts().remove(product);
+            newCategory.getProducts().add(product);
             product.setCategory(newCategory);
         }
 
-        // TODO Etapa 06: productRepository.save(product);
+        product = productRepository.save(product);
 
         return productMapper.toDTO(product);
     }
@@ -138,7 +141,7 @@ public class ProductService {
     public void deleteProduct(Long productId) {
         Product product = findProductEntityOrThrow(productId);
         product.setIsActive(false);
-        // TODO Etapa 06: productRepository.save(product);
+        productRepository.save(product);
     }
 
     /**
@@ -192,7 +195,7 @@ public class ProductService {
      * @return Lista de ProductDTO
      */
     public List<ProductDTO> findByCategory(Long categoryId) {
-        categoryService.findCategoryEntityOrThrow(categoryId);
+        categoryService.findCategoryEntityOrThrow(categoryId); // Validar que existe
         return productMapper.toDTOList(productRepository.findByCategory_CategoryId(categoryId));
     }
 
@@ -217,7 +220,7 @@ public class ProductService {
     public boolean checkAvailability(Long productId, Integer quantity) {
         Product product = findProductEntityOrThrow(productId);
         return product.getIsActive() &&
-               CalculationUtils.hasEnoughStock(product.getStockQty(), quantity);
+                CalculationUtils.hasEnoughStock(product.getStockQty(), quantity);
     }
 
     /**
@@ -245,7 +248,7 @@ public class ProductService {
         Product product = findProductEntityOrThrow(productId);
         ValidationUtils.validateNonNegative(BigDecimal.valueOf(newStock), "stock");
         product.setStockQty(newStock);
-        // TODO Etapa 06: productRepository.save(product);
+        productRepository.save(product);
     }
 
     /**
@@ -262,12 +265,12 @@ public class ProductService {
 
         if (!CalculationUtils.hasEnoughStock(product.getStockQty(), quantity)) {
             throw new InsufficientStockException(productId, product.getSku(),
-                quantity, product.getStockQty());
+                    quantity, product.getStockQty());
         }
 
         int newStock = CalculationUtils.calculateNewStock(product.getStockQty(), quantity);
         product.setStockQty(newStock);
-        // TODO Etapa 06: productRepository.save(product);
+        productRepository.save(product);
     }
 
     /**
@@ -284,7 +287,7 @@ public class ProductService {
 
         int newStock = product.getStockQty() + quantity;
         product.setStockQty(newStock);
-        // TODO Etapa 06: productRepository.save(product);
+        productRepository.save(product);
     }
 
     /**
@@ -310,12 +313,13 @@ public class ProductService {
                 .orElseThrow(() -> new EntityNotFoundException("Product", productId));
     }
 
-    // Método auxiliar para simular auto-increment
-    // Revisar
-    private Long generateNextId() {
-        return productRepository.findAll().stream()
-                .mapToLong(Product::getProductId)
-                .max()
-                .orElse(0L) + 1;
+    private String normalizeImage(String image) {
+        if (image == null || image.isBlank()) {
+            return null;
+        }
+
+        String normalizedImage = image.trim();
+        ValidationUtils.validateMaxLength(normalizedImage, 1000, "image");
+        return normalizedImage;
     }
 }
