@@ -35,6 +35,9 @@ public class PaymentMethod {
     @Column(name = "name", nullable = false, unique = true, length = 50)
     private String name;
 
+    @Column(name = "description", length = 255)
+    private String description;
+
     // Constructor vacío (requerido para JPA futuro)
 
     // Constructor con campos obligatorios
@@ -63,6 +66,7 @@ public class PaymentMethod {
         return "PaymentMethod{" +
                 "paymentMethodId=" + paymentMethodId +
                 ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
                 '}';
     }
 }

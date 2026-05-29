@@ -100,9 +100,9 @@ ON DUPLICATE KEY UPDATE price=VALUES(price), stock_qty=VALUES(stock_qty);
 
 -- Productos de Electronics > Smartphones
 INSERT INTO products (product_id, category_id, sku, name, description, price, stock_qty, is_active) VALUES
-(4, 12, 'PHONE-IP-001', 'iPhone 15 Pro', 'Latest Apple iPhone with A17 chip', 999.99, 20, TRUE),
-(5, 12, 'PHONE-SAM-001', 'Samsung Galaxy S24', 'Flagship Samsung smartphone', 899.99, 25, TRUE),
-(6, 12, 'PHONE-PIX-001', 'Google Pixel 8', 'Google Pixel with advanced AI', 699.99, 15, TRUE)
+(4, 2, 'PHONE-IP-001', 'iPhone 15 Pro', 'Latest Apple iPhone with A17 chip', 999.99, 20, TRUE),
+(5, 2, 'PHONE-SAM-001', 'Samsung Galaxy S24', 'Flagship Samsung smartphone', 899.99, 25, TRUE),
+(6, 2, 'PHONE-PIX-001', 'Google Pixel 8', 'Google Pixel with advanced AI', 699.99, 15, TRUE)
 ON DUPLICATE KEY UPDATE price=VALUES(price), stock_qty=VALUES(stock_qty);
 
 -- Productos de Electronics > Audio
